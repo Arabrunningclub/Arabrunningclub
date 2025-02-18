@@ -43,4 +43,8 @@ function mergeConfig(nextConfig, userConfig) {
   }
 }
 
+<<<<<<< HEAD
 export default nextConfig;
+=======
+export default nextConfig;
+>>>>>>> 3470ca8 (Update next.config.mjs)
