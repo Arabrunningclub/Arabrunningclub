@@ -21,10 +21,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 bg-white shadow-md z-50">
-        <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="relative w-12 h-12">
+        <nav className="container mx-auto px-0.5 py-0.5 flex justify-between items-center">
+          <Link href="/" className="relative w-36 h-36">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Arab%20Running%20Club%20Logo%20Banana-Photoroom-zLifh5jrzUiR4FoCbaAM5N2GOrCXn7.png"
+              src="https://i.imgur.com/Y4T3sYH.png"
               alt="Arab Running Club Logo"
               fill
               className="object-contain"
