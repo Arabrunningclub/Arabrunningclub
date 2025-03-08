@@ -36,10 +36,13 @@ export default function Charity() {
         </section>
 
         {/* Special Section for Yemen Relief */}
-        <section className="py-16 bg-gray-100">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold text-[#041E42] mb-4">Urgent: Help Feed Starving Children in Yemen</h2>
-            <p className="text-lg text-gray-700 mb-6">
+        <section 
+          className="py-16 bg-cover bg-center text-white" 
+          style={{ backgroundImage: "url('https://assets-us-01.kc-usercontent.com/99f113b4-e5f7-00d2-23c0-c83ca2e4cfa2/5e28c7f4-d444-4d9c-ac46-9f7a6d783de0/Yemen-malnutrition-2023-UN0793400.jpg')" }}
+        >
+          <div className="container mx-auto px-4 text-center bg-black bg-opacity-50 p-8 rounded-lg">
+            <h2 className="text-3xl font-bold mb-4">Urgent: Help Feed Starving Children in Yemen</h2>
+            <p className="text-lg mb-6">
               Join us in making a difference by supporting the <strong>Hope for Yemen</strong> campaign.
               Your donation will help provide food for starving children in Yemen.
             </p>
