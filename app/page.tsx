@@ -10,7 +10,7 @@ export default function Home() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
         <section className="bg-[#041E42] text-white py-20">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">Arab Running Club</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">Arab Running Club<sup>™</sup></h1>
             <p className="text-xl md:text-2xl mb-8">Uniting Arabs through fitness and community</p>
             <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
               <Link
@@ -63,8 +63,10 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#041E42]">Have Questions? Contact Us.</h2>
             <form className="max-w-md mx-auto">
+              <label htmlFor="contact-email" className="sr-only">Email</label>
               <input
                 type="email"
+                id="contact-email"
                 placeholder="Tell us what's on your mind"
                 className="w-full px-4 py-2 rounded-full mb-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#041E42]"
               />
@@ -74,7 +76,7 @@ export default function Home() {
                 onClick={(e) => {
                   e.preventDefault();
                   window.location.href = `mailto:arabrunningclub@gmail.com?subject=Question from Website&body=${encodeURIComponent(
-                    document.querySelector('input[type="email"]')?.value || "",
+                    document.querySelector('#contact-email')?.value || "",
                   )}`;
                 }}
               >
