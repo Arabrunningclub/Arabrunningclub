@@ -9,8 +9,8 @@ const events = [
   {
     id: 1,
     title: "Detroit Riverfront 5K",
-    date: "March 15, 2024",
-    time: "8:00 AM",
+    date: "TBD",
+    time: "TBD",
     location: "Detroit Riverwalk",
     description: "Join us for a scenic run along the Detroit River. All skill levels welcome!",
     image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Homepage.jpg-xAsGzsetdgzj2aWAQNwoah9GPVy81z.jpeg",
@@ -18,20 +18,20 @@ const events = [
   {
     id: 2,
     title: "Community Training Session",
-    date: "March 20, 2024",
-    time: "7:00 AM",
+    date: "TBD",
+    time: "TBD",
     location: "Belle Isle State Park",
     description: "Weekly group training session followed by breakfast and socializing.",
-    image: "/placeholder.svg?height=400&width=600",
+    image: "https://t3.ftcdn.net/jpg/06/16/17/88/360_F_616178830_rySDz4kA4m5l7tiWta1O0qLAFhFqw2eS.jpg",
   },
   {
     id: 3,
     title: "Charity Fun Run",
-    date: "April 1, 2024",
-    time: "9:00 AM",
+    date: "TBD",
+    time: "TBD",
     location: "Downtown Detroit",
     description: "Annual charity run supporting local Arab community initiatives.",
-    image: "/placeholder.svg?height=400&width=600",
+    image: "https://t3.ftcdn.net/jpg/06/16/17/88/360_F_616178830_rySDz4kA4m5l7tiWta1O0qLAFhFqw2eS.jpg",
   },
 ]
 
