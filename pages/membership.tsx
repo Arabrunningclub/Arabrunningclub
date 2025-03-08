@@ -57,7 +57,7 @@ export default function Membership() {
               >
                 click here
               </a> 
-              {" "} to get involved. You may also write your school email in the form below, and we will invite you to the organization.
+              {" "} to get involved. You may also write your school email in the form below, and we will invite you to the university organization.
             </p>
           </div>
         </section>
