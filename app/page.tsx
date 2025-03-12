@@ -37,7 +37,9 @@ export default function Home() {
 
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-8 text-[#041E42]">About Arab Running Club</h2>
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#041E42]">
+              <Link href="/about" className="hover:underline">About</Link> Arab Running Club
+            </h2>
             <p className="text-lg text-center max-w-3xl mx-auto text-gray-600">
               Arab Running Club (ARC) is dedicated to promoting health, fitness, and community among Arabs worldwide. We
               organize events, support charitable causes, and create a space for Arabs to connect through fitness.
@@ -76,7 +78,7 @@ export default function Home() {
                 onClick={(e) => {
                   e.preventDefault();
                   window.location.href = `mailto:arabrunningclub@gmail.com?subject=Question from Website&body=${encodeURIComponent(
-                    document.querySelector('#contact-email')?.value || "",
+                    (document.querySelector('#contact-email') as HTMLInputElement)?.value || "",
                   )}`;
                 }}
               >

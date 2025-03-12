@@ -12,7 +12,7 @@ const navItems = [
   { name: "Events", href: "/events" },
   { name: "Membership", href: "/membership" },
   { name: "Charity", href: "/charity" },
-  { name: "Contact", href: "/contact" },
+  { name: "Contact", href: "/" },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <nav className="container mx-auto px-0.5 py-0.5 flex justify-between items-center">
           <Link href="/" className="relative w-36 h-36">
             <Image
-              src="https://i.imgur.com/Y4T3sYH.png"
+              src="https://imgur.com/gHlNo1m.png"
               alt="Arab Running Club Logo"
               fill
               className="object-contain"
