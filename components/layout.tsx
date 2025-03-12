@@ -75,11 +75,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
       <main className="flex-grow">{children}</main>
       <footer className="bg-gray-100 py-6">
-        <div className="container mx-auto px-4 text-center text-[#041E42]">
-          © {new Date().getFullYear()} Arab Running Club. All rights reserved.
+        <div className="container mx-auto px-4 flex justify-between items-center text-[#041E42]">
+          <div className="flex space-x-6">
+        <a href="https://www.instagram.com/arab_runningclub" target="_blank" rel="noopener noreferrer">
+          <Image src="/icons8-instagram.gif" alt="Instagram" width={32} height={32} />
+        </a>
+        <a href="https://www.tiktok.com/@arabrunningclub" target="_blank" rel="noopener noreferrer">
+          <Image src="/icons8-tiktok-50.png" alt="TikTok" width={32} height={32} />
+        </a>
+        <a href="mailto:arabrunningclub@gmail.com">
+          <Image src="/icons8-envolope-30.png" alt="Email" width={32} height={32} />
+        </a>
+          </div>
+          <div>
+        © {new Date().getFullYear()} Arab Running Club. All rights reserved.
+          </div>
         </div>
       </footer>
-    </div>
-  )
-}
-
+        </div>
+      )
+    }

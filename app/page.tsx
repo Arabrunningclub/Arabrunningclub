@@ -38,12 +38,20 @@ export default function Home() {
         <section className="py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#041E42]">
-              <Link href="/about" className="hover:underline">About</Link> Arab Running Club
+              About Arab Running Club
             </h2>
             <p className="text-lg text-center max-w-3xl mx-auto text-gray-600">
               Arab Running Club (ARC) is dedicated to promoting health, fitness, and community among Arabs worldwide. We
               organize events, support charitable causes, and create a space for Arabs to connect through fitness.
             </p>
+            <div className="text-center mt-8">
+              <Link
+          href="/about"
+          className="inline-block bg-[#041E42] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#041E42]/90 transition-colors"
+              >
+          Learn More
+              </Link>
+            </div>
           </div>
         </section>
 
