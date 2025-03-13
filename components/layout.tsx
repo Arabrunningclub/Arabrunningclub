@@ -78,7 +78,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 flex justify-between items-center text-[#041E42]">
           <div className="flex space-x-6">
         <a href="https://www.instagram.com/arab_runningclub" target="_blank" rel="noopener noreferrer">
-          <Image src="/instagram.svg" alt="Instagram" width={32} height={32} />
+          <Image src="/instagram.svg" alt="Instagram" width={45} height={32} />
         </a>
         <a href="https://www.tiktok.com/@arabrunningclub" target="_blank" rel="noopener noreferrer">
           <Image src="/icons8-tiktok-50.png" alt="TikTok" width={32} height={32} />
