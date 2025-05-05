@@ -7,19 +7,30 @@ import { useEffect } from "react"
 
 export default function Events() {
   useEffect(() => {
-    (async () => {
-      const cal = await getCalApi({ namespace: "5k-run-rsvp" })
-      cal("ui", {
-        theme: "light",
+    const script = document.createElement("script");
+    script.src = "https://app.cal.com/embed/embed.js";
+    script.async = true;
+    script.onload = () => {
+      const Cal = (window as any).Cal;
+      Cal("init", "5k-run-rsvp", { origin: "https://cal.com" });
+
+      Cal.ns["5k-run-rsvp"]("inline", {
+        elementOrSelector: "#my-cal-inline",
+        config: { layout: "month_view" },
+        calLink: "arabrunningclub/5k-run-rsvp",
+      });
+
+      Cal.ns["5k-run-rsvp"]("ui", {
         cssVarsPerTheme: {
           light: { "cal-brand": "#041E42" },
-          dark: { "cal-brand": "#FFF" }
+          dark: { "cal-brand": "#FFFFFF" },
         },
-        hideEventTypeDetails: true,
-        layout: "month_view"
-      })
-    })()
-  }, [])
+        hideEventTypeDetails: false,
+        layout: "month_view",
+      });
+    };
+    document.body.appendChild(script);
+  }, []);
 
   return (
     <Layout>
@@ -60,16 +71,9 @@ export default function Events() {
             Join us for a scenic run along the Detroit River. All skill levels welcome!
           </p>
 
-          <div className="w-full h-[600px] overflow-hidden rounded-lg">
-            <Cal
-              namespace="5k-run-rsvp"
-              calLink="arabrunningclub/5k-run-rsvp"
-              style={{ width: "100%", height: "100%", overflow: "scroll" }}
-              config={{ layout: "month_view", theme: "light" }}
-            />
-          </div>
+            <div className="w-full h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden rounded-lg" id="my-cal-inline"></div>
         </motion.div>
       </section>
     </Layout>
-  )
+  );
 }
