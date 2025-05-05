@@ -53,17 +53,19 @@ export default function Events() {
           className="relative z-10 w-full max-w-4xl bg-white bg-opacity-90 rounded-xl shadow-lg p-8 backdrop-blur-sm"
         >
           <h2 className="text-2xl md:text-3xl font-bold text-center text-[#041E42] mb-4">
-            Register for the Detroit Riverfront 5K
+            Register for our Latest 5K run!
+            By registering, you help us plan better and ensure we can accommodate everyone.
           </h2>
-          <p className="text-center text-gray-700 mb-6">
-            Join us for a scenic run along the Detroit River. All skill levels welcome!
-          </p>
+            <p className="text-center text-gray-700 mb-6">
+            Join us for a scenic run around Detroit. All skill levels welcome! 
+            <span className="font-bold text-[#041E42]">Follow our Instagram</span> for all the latest updates on run locations and times.
+            </p>
 
-          <div className="w-full h-[800px] overflow-hidden rounded-lg">
+          <div className="w-full h-[600px] overflow-hidden rounded-lg">
             <Cal
               namespace="5k-run-rsvp"
               calLink="arabrunningclub/5k-run-rsvp"
-              style={{ width: "100%", height: "100%", overflow: "scroll" }}
+              style={{ width: "120%", height: "120%", overflow: "scroll" }}
               config={{ layout: "month_view" }}
             />
           </div>
