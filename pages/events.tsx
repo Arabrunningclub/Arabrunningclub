@@ -65,7 +65,7 @@ export default function Events() {
             <Cal
               namespace="5k-run-rsvp"
               calLink="arabrunningclub/5k-run-rsvp"
-              style={{ width: "120%", height: "120%", overflow: "scroll" }}
+              style={{ width: "100%", height: "100%", overflow: "scroll" }}
               config={{ layout: "month_view" }}
             />
           </div>
