@@ -67,29 +67,38 @@ export default function Events() {
           </p>
           <p className="text-center text-gray-700 mb-6">
             Join us for a scenic run around Detroit. All skill levels welcome!{" "}
-            <a
-              href="https://www.instagram.com/arab_runningclub/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-[#041E42] underline"
-            >
+            <span className="font-bold text-[#041E42] underline">
               Follow our Instagram
-            </a>{" "}
+            </span>{" "}
             for all the latest updates on run locations and times.
           </p>
 
           <div
-            className="w-full h-[500px] overflow-hidden rounded-lg custom-scrollbar"
+            className="w-full h-[500px] overflow-hidden rounded-lg relative"
             style={{
               scrollbarWidth: "none", // Firefox
               msOverflowStyle: "none", // IE/Edge
             }}
           >
             <style jsx>{`
-              .custom-scrollbar::-webkit-scrollbar {
-                display: none;
+              div.w-full.h-[500px]::-webkit-scrollbar {
+                display: none; /* Chrome, Safari, and Edge */
+              }
+              div.w-full.h-[500px] {
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
               }
             `}</style>
+
+            {/* Transparent overlay to cover arrows and slim rectangle */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "transparent",
+                zIndex: 10,
+              }}
+            />
+
             <Cal
               namespace="5k-run-rsvp"
               calLink="arabrunningclub/5k-run-rsvp"
@@ -99,7 +108,10 @@ export default function Events() {
                 transform: "scale(1.0)",
                 transformOrigin: "top left",
               }}
-              config={{ layout: "month_view" }}
+              config={{
+                layout: "month_view",
+                branding: { "hide-cal-link": "true" }, // Keeps "cal.com" branding hidden
+              }}
             />
           </div>
         </motion.div>
