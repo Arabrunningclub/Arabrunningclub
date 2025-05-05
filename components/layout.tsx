@@ -21,8 +21,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 bg-white shadow-md z-50">
-        <nav className="container mx-auto px-0.5 py-0.5 flex justify-between items-center">
-          <Link href="/" className="relative w-36 h-36">
+      <nav className="container mx-auto px-0 py-0 flex justify-between items-center">
+          <Link href="/" className="relative w-24 h-24">
             <Image
               src="https://imgur.com/gHlNo1m.png"
               alt="Arab Running Club Logo"

@@ -22,7 +22,7 @@ export default function About() {
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-[#041E42] mb-4">Welcome to Arab Running Club</h2>
                 <p className="text-gray-600 text-lg">
-                  Welcome to Arab Running Club, where the thrill of running meets the strength of community.
+                  Welcome to Arab Running Club.
                   Our aim is simple: to unite and empower Arabs across the Detroit metropolitan area through
                   organized runs and social events.
                 </p>
@@ -45,7 +45,7 @@ export default function About() {
 
                 <h2 className="text-2xl font-bold text-[#041E42] mt-8 mb-4">Our Mission</h2>
                 <p className="text-gray-600 text-lg">
-                  We are not just about fitness; we are about forging meaningful relationships.
+                  We are not just about fitness; we are about forging a unified Arab identity.
                   Too often, division has been used to weaken our community, separating us instead of bringing us together.
                   Arab Running Club is dedicated to creating an inclusive environment where Arabs from all walks of life can come
                   together, share experiences, and grow as one unified community.
@@ -54,7 +54,10 @@ export default function About() {
                 <h2 className="text-2xl font-bold text-[#041E42] mt-8 mb-4">Join the Movement</h2>
                 <p className="text-gray-600 text-lg">
                   Arab Running Club is more than just a running group—it's a movement. Together, we stay active,
-                  stay connected, and stay inspired. Join our runs organized for Arabs, by Arabs.
+                  stay connected, and stay inspired. Whether you're a seasoned runner or just starting out, there's a place for you here.
+                </p>
+                <p className="text-[#041E42] text-xl italic font-semibold mt-6">
+                  اركض كعربي، اركض بقوة
                 </p>
                 <a
                   href="/membership"
