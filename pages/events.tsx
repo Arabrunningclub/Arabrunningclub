@@ -30,7 +30,9 @@ export default function Events() {
       >
         <section className="bg-[#041E42] text-white py-20 text-center">
           <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">Upcoming Events</h1>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              Upcoming Events
+            </h1>
             <p className="text-xl md:text-2xl">
               Join us for our next community run
             </p>
@@ -40,7 +42,7 @@ export default function Events() {
 
       {/* Calendar Section with Cinematic Background */}
       <section
-        className="relative w-full flex items-center justify-center min-h-[800px]"
+        className="relative w-full flex items-center justify-center min-h-[80vh]"
         style={{
           backgroundImage:
             "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Homepage.jpg-xAsGzsetdgzj2aWAQNwoah9GPVy81z.jpeg')",
@@ -67,37 +69,31 @@ export default function Events() {
           </p>
           <p className="text-center text-gray-700 mb-6">
             Join us for a scenic run around Detroit. All skill levels welcome!{" "}
-            <span className="font-bold text-[#041E42] underline">
+            <a
+              href="https://www.instagram.com/arab_runningclub/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-[#041E42] underline"
+            >
               Follow our Instagram
-            </span>{" "}
+            </a>{" "}
             for all the latest updates on run locations and times.
           </p>
 
+          {/* Scrollable calendar wrapper */}
           <div
-            className="w-full h-[500px] overflow-hidden rounded-lg relative"
+            className="scroll-container w-full h-[80vh] max-h-[500px] overflow-auto rounded-lg"
             style={{
-              scrollbarWidth: "none", // Firefox
-              msOverflowStyle: "none", // IE/Edge
+              WebkitOverflowScrolling: "touch",  // smooth iOS scrolling
+              scrollbarWidth: "none",            // Firefox
+              msOverflowStyle: "none",           // IE/Edge
             }}
           >
             <style jsx>{`
-              div.w-full.h-[500px]::-webkit-scrollbar {
-                display: none; /* Chrome, Safari, and Edge */
-              }
-              div.w-full.h-[500px] {
-                -ms-overflow-style: none; /* IE and Edge */
-                scrollbar-width: none; /* Firefox */
+              .scroll-container::-webkit-scrollbar {
+                display: none;
               }
             `}</style>
-
-            {/* Transparent overlay to cover arrows and slim rectangle */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: "transparent",
-                zIndex: 10,
-              }}
-            />
 
             <Cal
               namespace="5k-run-rsvp"
@@ -105,13 +101,8 @@ export default function Events() {
               style={{
                 width: "100%",
                 height: "100%",
-                transform: "scale(1.0)",
-                transformOrigin: "top left",
               }}
-              config={{
-                layout: "month_view",
-                branding: { "hide-cal-link": "true" }, // Keeps "cal.com" branding hidden
-              }}
+              config={{ layout: "month_view" }}
             />
           </div>
         </motion.div>
@@ -119,4 +110,4 @@ export default function Events() {
     </Layout>
   );
 }
-// This code is a Next.js page that displays a calendar for upcoming events using the Cal.com embed feature.
+// Note: Ensure to replace the Calcom embed link with your actual link.
