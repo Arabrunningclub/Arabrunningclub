@@ -11,6 +11,7 @@ export default function Donations() {
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [paypalError, setPaypalError] = useState(false);
   const paypalRef = useRef<HTMLDivElement>(null);
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
   useEffect(() => {
     if (paypalLoaded && !paypalError && paypalRef.current && (window as any).paypal) {
@@ -40,7 +41,7 @@ export default function Donations() {
       <meta property="og:type" content="website" />
       </Head>
       <Script
-        src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD`}
+        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD`}
         onLoad={() => setPaypalLoaded(true)}
         onError={() => setPaypalError(true)}
       />
