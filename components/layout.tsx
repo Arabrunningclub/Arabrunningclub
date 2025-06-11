@@ -12,6 +12,7 @@ const navItems = [
   { name: "Events", href: "/events" },
   { name: "Membership", href: "/membership" },
   { name: "Charity", href: "/charity" },
+  { name: "Donations", href: "/donations" },
   { name: "Shop", href: "https://0hx838-nn.myshopify.com/?_ab=0&_fd=0&_sc=1", external: true },
   { name: "Contact", href: "/" },
 ]
