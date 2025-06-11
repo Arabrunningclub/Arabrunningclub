@@ -26,11 +26,12 @@ export default function Charity() {
               <p className="text-gray-600">
                 Participate in our charity runs or donate to support the cause.
               </p>
-              <button 
-                className="mt-4 bg-[#041E42] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#041E42]/90 transition-colors"
-              >
+                <a
+                href="/donations"
+                className="mt-4 inline-block bg-[#041E42] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#041E42]/90 transition-colors"
+                >
                 Donate Now
-              </button>
+                </a>
             </div>
           </div>
         </section>
