@@ -2,9 +2,28 @@
 
 import { motion } from "framer-motion";
 import Head from "next/head";
+import Script from "next/script";
+import { useEffect, useRef, useState } from "react";
 import Layout from "../components/layout";
 
 export default function Donations() {
+  const [amount, setAmount] = useState("10");
+  const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [paypalError, setPaypalError] = useState(false);
+  const paypalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (paypalLoaded && !paypalError && paypalRef.current && (window as any).paypal) {
+      (window as any).paypal
+        .Buttons({
+          createOrder: (_data: any, actions: any) =>
+            actions.order.create({ purchase_units: [{ amount: { value: amount } }] }),
+          onApprove: (_data: any, actions: any) => actions.order.capture(),
+        })
+        .render(paypalRef.current);
+    }
+  }, [paypalLoaded, paypalError, amount]);
+
   return (
     <>
       <Head>
@@ -13,7 +32,18 @@ export default function Donations() {
           name="description"
           content="Support Arab Running Club through your donations. Help us foster community and fund charitable runs."
         />
+        <meta property="og:title" content="Donations | Arab Running Club" />
+        <meta
+          property="og:description"
+          content="Support Arab Running Club through your donations. Help us foster community and fund charitable runs."
+        />
+      <meta property="og:type" content="website" />
       </Head>
+      <Script
+        src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD`}
+        onLoad={() => setPaypalLoaded(true)}
+        onError={() => setPaypalError(true)}
+      />
       <Layout>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
           {/* Hero Section */}
@@ -34,14 +64,29 @@ export default function Donations() {
                 <p className="text-gray-600 mb-6">
                   Every dollar helps us create events that strengthen our community and give back to those in need.
                 </p>
-                <a
-                  href="https://www.paypal.com/donate?business=arabrunningclub@gmail.com&no_recurring=0&currency_code=USD"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-[#041E42] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#041E42]/90 transition-colors"
-                >
-                  Donate with PayPal
-                </a>
+                <div className="flex justify-center space-x-2 mb-4">
+                  {["5", "10", "20"].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setAmount(val)}
+                      className="px-3 py-1 bg-gray-200 rounded-full text-[#041E42] hover:bg-gray-300"
+                    >{`$${val}`}</button>
+                  ))}
+                </div>
+                <div className="mb-4">
+                  <input
+                    type="number"
+                    min="1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="border border-gray-300 rounded w-32 px-2 py-1 text-center"
+                  />
+                </div>
+                <div ref={paypalRef} className="inline-block" />
+                {paypalError && (
+                  <p className="text-red-500 mt-4">PayPal failed to load. Please try again later.</p>
+                )}
               </div>
             </div>
           </section>
