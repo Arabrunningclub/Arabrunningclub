@@ -49,7 +49,7 @@ export default function HomePage() {
 
         {/* Upcoming Events Call-to-Action */}
         {/* This section highlights upcoming events and provides a link to view all events */}
-        <section className="bg-gray-100 py-16">
+        <section className="bg-gray-100 dark:bg-gray-900 py-16">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#041E42]">
               Upcoming Events
