@@ -22,13 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const matchDark = window.matchMedia("(prefers-color-scheme: dark)");
-      setIsDark(matchDark.matches);
-      const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
-      matchDark.addEventListener("change", handler);
-      return () => matchDark.removeEventListener("change", handler);
-    }
+    // No system preference detection for dark mode
   }, []);
 
   return (
