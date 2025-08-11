@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Head from "next/head";
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
-import Layout from "../components/layout";
+import Layout from "@/components/layout";
 
 export default function Donations() {
   const [amount, setAmount] = useState("10");

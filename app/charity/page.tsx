@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Layout from "../components/layout";
+import Layout from "@/components/layout";
 
 export default function Charity() {
   return (

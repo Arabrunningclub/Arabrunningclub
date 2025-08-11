@@ -1,8 +1,7 @@
 "use client";
 
+import Layout from "@/components/layout";
 import { motion } from "framer-motion";
-import Layout from "../components/layout";
-
 export default function About() {
   return (
     <Layout>
@@ -69,7 +68,6 @@ export default function About() {
             </div>
           </div>
         </section>
-
       </motion.div>
     </Layout>
   );
