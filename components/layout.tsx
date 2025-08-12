@@ -148,7 +148,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <footer
         className={
           isDark
-            ? "bg-[#222831] text-white border-t border-white/20 py-6 text-center"
+            ? "bg-[#292929] text-white border-t border-white/20 py-6 text-center"
             : "bg-white text-black border-t border-black/10 py-6 text-center"
         }
       >
