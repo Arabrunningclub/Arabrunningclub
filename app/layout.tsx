@@ -11,7 +11,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          storageKey="arc-theme"               // persist across pages/reloads
+          disableTransitionOnChange            // no janky transitions on toggle
+        >
           {children}
         </ThemeProvider>
       </body>
