@@ -1,14 +1,13 @@
-"use client";
-
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Layout from "@/components/layout";
-import { useSearchParams } from "next/navigation";
+import StatusBanner from "./StatusBanner";
 
-export default function Donations() {
+export const dynamic = "force-dynamic"; // avoid static build issues
+
+export default function DonationsPage() {
   const [amount, setAmount] = useState("10");
-  const params = useSearchParams();
-  const status = params.get("status"); // "success" | "cancel" | null
 
   return (
     <Layout>
@@ -29,16 +28,9 @@ export default function Donations() {
             <div className="container mx-auto px-4">
               <div className="bg-white dark:bg-black rounded-lg shadow-lg p-6 text-center max-w-lg mx-auto">
                 {/* Status banners */}
-                {status === "success" && (
-                  <div className="mb-4 rounded-lg border border-green-600/40 bg-green-600/10 p-3 text-green-200">
-                    Thank you — your donation was successful!
-                  </div>
-                )}
-                {status === "cancel" && (
-                  <div className="mb-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3 text-yellow-100">
-                    Donation canceled. You were not charged.
-                  </div>
-                )}
+                <Suspense fallback={null}>
+                  <StatusBanner />
+                </Suspense>
 
                 <h2 className="text-2xl font-bold mb-4">Make a Donation</h2>
                 <p className="opacity-80 mb-6">
@@ -71,7 +63,7 @@ export default function Donations() {
                 {/* Stripe Checkout */}
                 <button
                   type="button"
-                  className="w-full bg-white text-black px-6 py-3 rounded-full font-semibold hover:opacity-90 transition-colors mb-4"
+                  className="w-full bg-white text-black border border-black px-6 py-3 rounded-full font-semibold transition-colors mb-4 hover:bg-black hover:text-white"
                   onClick={async () => {
                     try {
                       const res = await fetch("/api/checkout", {
