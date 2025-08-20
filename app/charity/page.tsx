@@ -11,51 +11,37 @@ export default function Charity() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
 
           {/* Charity Header Section */}
-          <section className="py-20">
+          <section className="pt-32 pb-20"> {/* ⬅️ added more top padding */}
             <div className="container mx-auto px-4 text-center">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">Charity</h1>
-              <p className="text-xl md:text-2xl mb-8">
-                Support our community initiatives through our charity runs.
+              <h1 className="text-5xl md:text-7xl font-bold mb-6">Charity</h1> {/* ⬅️ made text larger + more margin */}
+              <p className="text-xl md:text-2xl mb-12">
+                Support where you came from with ARC organized fundraisers.
               </p>
             </div>
           </section>
 
-          {/* How to Help Section */}
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="bg-white dark:bg-black rounded-lg shadow-lg p-6 text-center">
-                <h2 className="text-2xl font-bold mb-4">How You Can Help</h2>
-                <p className="opacity-80">
-                  Participate in our charity runs or donate to support the cause.
-                </p>
-                <Link
-                  href="/donations"
-                  className="mt-4 inline-block bg-white text-black border border-black px-6 py-2 rounded-full font-semibold hover:bg-black hover:text-white transition-colors"
-                >
-                  Donate Now
-                </Link>
-              </div>
-            </div>
-          </section>
-
-          {/* Special Section for Yemen Relief */}
+          {/* Special Section for Gaza Relief */}
           <section
-            className="py-16 bg-cover bg-center text-white"
-            style={{ backgroundImage: "url('https://assets-us-01.kc-usercontent.com/99f113b4-e5f7-00d2-23c0-c83ca2e4cfa2/5e28c7f4-d444-4d9c-ac46-9f7a6d783de0/Yemen-malnutrition-2023-UN0793400.jpg')" }}
+            className="py-32 bg-cover bg-center text-white min-h-[80vh]" 
+            style={{
+              backgroundImage: "url('https://assets-us-01.kc-usercontent.com/99f113b4-e5f7-00d2-23c0-c83ca2e4cfa2/5e28c7f4-d444-4d9c-ac46-9f7a6d783de0/Yemen-malnutrition-2023-UN0793400.jpg')",
+            }}
           >
-            <div className="container mx-auto px-4 text-center bg-black bg-opacity-50 p-8 rounded-lg">
-              <h2 className="text-3xl font-bold mb-4">Urgent: Help Feed Starving Children in Yemen</h2>
-              <p className="text-lg mb-6">
-                Join us in making a difference by supporting the <strong>Hope for Yemen</strong> campaign.
+            <div className="container mx-auto px-4 text-center bg-black bg-opacity-50 p-10 rounded-xl max-w-3xl">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Urgent: Help Feed Starving Children in Gaza
+              </h2>
+              <p className="text-lg md:text-xl mb-8">
+                Join us in making a difference by supporting the <strong>Gaza Emergency</strong> campaign.
                 Your donation will help provide food for starving children in Yemen.
               </p>
               <a
-                href="https://www.launchgood.com/v4/campaign/hope_for_yemen_help_feed_starving_children_in_yemen?src=4171180"
+                href="https://www.launchgood.com/v4/campaign/gaza_emergency__arab_running_club"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-red-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors"
+                className="inline-block bg-red-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-red-700 transition-colors text-lg"
               >
-                Donate to Yemen Relief
+                Donate to Gaza Relief
               </a>
             </div>
           </section>
@@ -64,3 +50,4 @@ export default function Charity() {
     </Layout>
   );
 }
+

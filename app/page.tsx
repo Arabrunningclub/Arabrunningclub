@@ -1,7 +1,9 @@
 "use client";
+
 import Layout from "@/components/layout";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import type { Metadata } from "next";   // ✅ add this
 export default function HomePage() {
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -10,6 +12,7 @@ export default function HomePage() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const [email, setEmail] = useState("");
+
 
   // Watch <html class="dark"> toggles from your header button
   useEffect(() => {
