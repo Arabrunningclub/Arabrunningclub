@@ -41,8 +41,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black dark:bg-[#181C14] dark:text-white transition-colors">
-      <header className="sticky top-0 z-50 shadow-md bg-white text-black dark:bg-[#292929] dark:text-white">
-        <nav className="container mx-auto px-0 py-0 flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 h-20 bg-white/10 dark:bg-black/10 backdrop-blur-md border-b border-white/10 dark:border-white/10 shadow-none text-black dark:text-white">
+        <nav className="container mx-auto h-20 px-0 py-0 flex justify-between items-center">
           <Link href="/" className="relative w-24 h-24">
             <Image
               src={mounted && isDark ? "/logo-dark.png" : "/logo.png"}
@@ -145,16 +145,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <footer
-        className={
-          isDark
-            ? "bg-[#292929] text-white border-t border-white/20 py-6 text-center"
-            : "bg-white text-black border-t border-black/10 py-6 text-center"
-        }
-      >
-        © {new Date().getFullYear()} Arab Running Club. All rights reserved.
-      </footer>
-    </div>
-  )
-}
-
+      <footer className="bg-background text-foreground py-6 text-center">
+       © {new Date().getFullYear()} Arab Running Club. All rights reserved. 
+        </footer> 
+        </div> 
+        ) 
+      }

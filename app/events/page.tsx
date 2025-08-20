@@ -36,7 +36,7 @@ export default function Events() {
                 Upcoming Events
               </h1>
               <p className="text-xl md:text-2xl">
-                Join us for our next community run
+                Join us for our next community event!
               </p>
             </div>
           </section>
@@ -78,7 +78,7 @@ export default function Events() {
                 >
                   Follow our Instagram
                 </Link>{" "}
-                for all the latest updates on run locations and times.
+                for all the latest updates on event locations and times.
               </p>
 
               <div
@@ -96,8 +96,8 @@ export default function Events() {
                 `}</style>
 
                 <Cal
-                  namespace="5k-run-rsvp"
-                  calLink="arabrunningclub/5k-run-rsvp"
+                  namespace="events-rsvp"
+                  calLink="arabrunningclub/events-rsvp"
                   style={{ width: "100%", height: "100%" }}
                   config={{ layout: "month_view" }}
                 />

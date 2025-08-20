@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Arab Running Club™",
+  title: "Arab Running Club",
   description: "Uniting Arabs through fitness, health, and charity",
 };
 
