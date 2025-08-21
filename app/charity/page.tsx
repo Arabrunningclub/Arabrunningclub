@@ -39,7 +39,7 @@ export default function Charity() {
                 href="https://www.launchgood.com/v4/campaign/gaza_emergency__arab_running_club"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-red-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-red-700 transition-colors text-lg"
+                className="inline-block bg-white text-black border border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-colors text-lg"
               >
                 Donate to Gaza Relief
               </a>

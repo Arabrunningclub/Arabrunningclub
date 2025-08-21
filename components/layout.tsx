@@ -12,7 +12,7 @@ const navItems = [
   { name: "Events", href: "/events" },
   { name: "Charity", href: "/charity" },
   { name: "Donations", href: "/donations" },
-  { name: "Shop", href: "https://0hx838-nn.myshopify.com/?_ab=0&_fd=0&_sc=1", external: true },
+  { name: "Shop", href: "https://shop.wakingup.com/products/work-in-progress-t-shirt?srsltid=AfmBOop1KjQPbEB77g-M3F8egLSPn3CRJ0jgyAkB-xxJk2-8qkjRm0-l&variant=44256900415735", external: true },
   { name: "Contact", href: "/" },
 ]
 

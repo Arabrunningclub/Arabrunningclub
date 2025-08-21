@@ -3,7 +3,7 @@
 import Layout from "@/components/layout";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Head from "next/head";   // ✅ import Head
+import Head from "next/head";
 
 export default function About() {
   return (
@@ -15,7 +15,6 @@ export default function About() {
           content="Learn more about the mission and vision of the Arab Running Club."
         />
       </Head>
-
       <Layout>
         <div className="bg-white text-black dark:bg-black dark:text-white transition-colors min-h-screen">
           <motion.div
@@ -105,3 +104,4 @@ export default function About() {
     </>
   );
 }
+
