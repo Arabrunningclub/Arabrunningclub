@@ -35,14 +35,14 @@ export default function Charity() {
                 Join us in making a difference by supporting the <strong>Gaza Emergency</strong> campaign.
                 Your donation will help provide food for starving children in Yemen.
               </p>
-              <a
+                <a
                 href="https://www.launchgood.com/v4/campaign/gaza_emergency__arab_running_club"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-white text-black border border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-colors text-lg"
-              >
+                className="inline-block bg-red-600 text-white border border-red-600 px-8 py-4 rounded-full font-semibold hover:bg-red-700 hover:border-red-700 transition-colors text-lg"
+                >
                 Donate to Gaza Relief
-              </a>
+                </a>
             </div>
           </section>
         </motion.div>
