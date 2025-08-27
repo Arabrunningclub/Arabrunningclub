@@ -9,7 +9,7 @@ import Link from "next/link";
 export default function Events() {
   useEffect(() => {
     (async () => {
-      const cal = await getCalApi({ namespace: "5k-run-rsvp" });
+      const cal = await getCalApi({ namespace: "Event-rsvp" });
       cal("ui", {
         cssVarsPerTheme: {
           light: { "cal-brand": "#041E42" },
@@ -61,14 +61,13 @@ export default function Events() {
               className="relative z-10 w-full max-w-5xl rounded-xl shadow-lg p-8 bg-white dark:bg-black bg-opacity-90 backdrop-blur-sm"
             >
               <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
-                Register for our latest 5K run!
+                Register for our latest event!
               </h2>
               <p className="text-lg md:text-xl text-center mb-4">
-                By registering, you help us plan better and ensure we can
-                accommodate everyone.
+                Register now to help us create the best experience—we plan based on how many people are coming! 
               </p>
               <p className="text-center mb-6">
-                Join us for a scenic run around Detroit. All skill levels
+                Join us for scenic events around Detroit. All skill levels
                 welcome!{" "}
                 <Link
                   href="https://www.instagram.com/arab_runningclub/"

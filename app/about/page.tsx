@@ -83,7 +83,8 @@ export default function About() {
                     </h2>
                     <p className="text-lg opacity-80">
                       Arab Running Club is more than just a running group—it's a
-                      movement. Together, we stay active, stay connected, and
+                      movement. We hold all sports events and activities to promote
+                      fitness and well-being. Together, we stay active, stay connected, and
                       stay inspired. Whether you're a seasoned runner or just
                       starting out, there's a place for you here.
                     </p>
