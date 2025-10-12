@@ -80,7 +80,7 @@ function DonationsClient() {
 
             <h2 className="text-2xl font-bold mb-3">Make a Donation</h2>
             <p className="opacity-80 mb-6">
-              Every dollar helps us create events that strengthen our community and give back to those in need.
+              Every dollar helps us create events and initiatives that strengthen our community and support positive impact locally and abroad.
             </p>
 
             <div className="mb-4 flex flex-wrap justify-center gap-2">
