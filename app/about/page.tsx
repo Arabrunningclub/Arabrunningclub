@@ -85,7 +85,7 @@ export default function About() {
                       stay inspired. Whether you're a seasoned runner or just
                       starting out, there's a place for you here.
                     </p>
-                    <p className="text-xl italic font-semibold mt-6">.Everyone is welcome!</p>
+                    <p className="text-xl italic font-semibold mt-6">Everyone is welcome!</p>
                     <Link
                       href="/events"
                       className="inline-block mt-8 px-6 py-2 bg-white text-black border border-black font-bold rounded-full hover:bg-black hover:text-white transition-colors"

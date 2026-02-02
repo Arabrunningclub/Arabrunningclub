@@ -89,16 +89,19 @@
       .slots { display: grid; gap: 12px; margin-top: 8px; }
 
       .slot {
-        width: 100%;
-        text-align: left;
-        border-radius: 18px;
-        padding: 14px 16px;
-        background: rgba(255, 255, 255, 0.16);
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        color: white;
-        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
-        transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
-      }
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  border-radius: 18px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: white;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+  transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
+}
 
       .slot:hover { transform: translateY(-2px); filter: brightness(1.02); background: rgba(255,255,255,0.19); }
       .slot-time { font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
@@ -106,8 +109,21 @@
       .spots { font-weight: 800; }
 
       .slot.full { opacity: 0.55; cursor: not-allowed; }
-      .slot.full:hover { transform: none; filter: none; }
+      .slot.full:hover { transform: none; filter: none; background: rgba(255, 255, 255, 0.16); }
 
+      .slot-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slot-price {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
+  padding-left: 16px;
+}
       .heart {
         position: absolute;
         opacity: 0.95;
@@ -322,21 +338,28 @@ function showSlotPicker() {
       <input id="rsvpPhone" type="tel"   placeholder="Phone (optional) 📱" autocomplete="tel" />
     </div>
 
-    <div class="slots">
-      <button class="slot" id="slotA" type="button" onclick="chooseSlot('11:30-12:30')">
-        <div class="slot-time">11:30–12:30</div>
-        <div class="slot-sub">
-          Early class 💖 • <span class="spots" id="spotsA">Loading…</span>
-        </div>
-      </button>
-
-      <button class="slot" id="slotB" type="button" onclick="chooseSlot('1:00-2:00')">
-        <div class="slot-time">1:00–2:00</div>
-        <div class="slot-sub">
-          Later class 💅✨ • <span class="spots" id="spotsB">Loading…</span>
-        </div>
-      </button>
+   <div class="slots">
+  <button class="slot" id="slotA" type="button" onclick="chooseSlot('11:30-12:30')">
+    <div class="slot-left">
+      <div class="slot-time">11:30–12:30</div>
+      <div class="slot-sub">
+        Early class 💖 • <span class="spots" id="spotsA">25 spots left</span>
+      </div>
     </div>
+    <div class="slot-price">$15</div>
+  </button>
+
+  <button class="slot" id="slotB" type="button" onclick="chooseSlot('1:00-2:00')">
+    <div class="slot-left">
+      <div class="slot-time">1:00–2:00</div>
+      <div class="slot-sub">
+        Later class 💅✨ • <span class="spots" id="spotsB">25 spots left</span>
+      </div>
+    </div>
+    <div class="slot-price">$15</div>
+  </button>
+</div>
+
 
     <p style="margin:12px 0 0; font-size:12px; opacity:.9;">
       Thank you💞
