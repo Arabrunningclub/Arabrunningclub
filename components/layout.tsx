@@ -23,7 +23,14 @@ function getInitialTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout({
+  children,
+  transparent = false,
+}: {
+  children: React.ReactNode;
+  transparent?: boolean;
+}) {
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDark, setIsDark] = useState<boolean>(getInitialTheme)
   const [mounted, setMounted] = useState(false)
@@ -41,7 +48,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
   <div className="min-h-screen flex flex-col text-black dark:text-white transition-colors">
-      <header className="fixed top-0 left-0 right-0 z-50 h-20 bg-white/10 dark:bg-black/10 backdrop-blur-md border-b border-white/10 dark:border-white/10 shadow-none text-black dark:text-white">
+      <header
+  className={[
+    "fixed top-0 left-0 right-0 z-50 h-20 backdrop-blur-md border-b shadow-none",
+    transparent
+      ? "bg-white/10 dark:bg-black/10 border-white/10 dark:border-white/10"
+      : "bg-white/10 dark:bg-black/10 border-white/10 dark:border-white/10",
+  ].join(" ")}
+>
         <nav className="container mx-auto h-20 px-0 py-0 flex justify-between items-center">
           <Link href="/" className="relative w-24 h-24">
             <Image
@@ -141,13 +155,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main className={isDark ? "flex-grow bg-[#181C14]" : "flex-grow bg-white"}>
+      <main
+  className={[
+    "flex-grow",
+    transparent ? "bg-transparent" : isDark ? "bg-[#181C14]" : "bg-white",
+  ].join(" ")}
+>
         {children}
       </main>
-
-      <footer className="bg-background text-foreground py-6 text-center">
-       © {new Date().getFullYear()} Arab Running Club. All rights reserved. 
-        </footer> 
-        </div> 
-        ) 
-      }
+{!transparent && (
+  <footer className="bg-background text-foreground py-6 text-center">
+    © {new Date().getFullYear()} Arab Running Club. All rights reserved.
+  </footer>
+)}
+    </div>
+  )
+}
