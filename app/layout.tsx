@@ -1,10 +1,10 @@
 // app/layout.tsx
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const siteUrl = "https://www.arab-runningclub.com";
-const ogImage = `${siteUrl}/og-image.jpg`; // <-- put this file in /public (we'll do that next)
+const ogImage = `${siteUrl}/og-image.jpg`;
 
 export const metadata: Metadata = {
   title: {
@@ -30,14 +30,22 @@ export const metadata: Metadata = {
     images: [ogImage],
   },
 
-  // (Optional but nice)
   metadataBase: new URL(siteUrl),
+};
+
+// ✅ This is the Next.js-native way to add: viewport-fit=cover
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      {/* ✅ Force the document background to follow theme.
+          This is what iOS uses for that top safe-area region. */}
+      <body className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
