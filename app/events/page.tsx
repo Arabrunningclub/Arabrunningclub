@@ -14,6 +14,7 @@ type EventSlot = {
   href: string;
   badge?: string;
   cost?: string;
+  images?: string[]; // NEW
 };
 
 const EVENTS: EventSlot[] = [
@@ -24,6 +25,14 @@ const EVENTS: EventSlot[] = [
     timeLabel: "11:30 AM – 12:30 PM • 1:00 PM – 2:00 PM",
     location: "Student Center • Dance Room 020",
     cost: "$15",
+    images: [
+      "/images/pilates-1.jpg",
+      "/images/pilates-2.jpg",
+      "/images/pilates-3.jpg",
+      "/images/pilates-4.jpg",
+      "/images/pilates-5.jpg",
+      "/images/pilates-6.jpg",
+    ],
     description:
       "Beginner-friendly premium pilates experience. Drinks + snacks included. RSVP so we can plan mats, spacing, and the overall setup.",
     href: "/pilates",
@@ -95,6 +104,31 @@ function EventSlotCard({ event }: { event: EventSlot }) {
     </motion.div>
   );
 }
+function ImageRail({ images = [] }: { images?: string[] }) {
+  if (!images.length) return null;
+
+  return (
+    <aside className="hidden lg:block">
+      <div className="sticky top-24">
+        <div className="grid grid-cols-2 gap-3">
+          {images.map((src, i) => (
+            <div
+              key={`${src}-${i}`}
+              className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+            >
+              <img
+                src={src}
+                alt=""
+                className="h-36 w-full object-cover transition-transform duration-300 hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+}
 
 export default function Events() {
   return (
@@ -133,11 +167,17 @@ export default function Events() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {EVENTS.map((e) => (
-                  <EventSlotCard key={e.id} event={e} />
-                ))}
-              </div>
+              <div className="grid gap-10 lg:grid-cols-[520px_1fr] items-start">
+  <div className="grid gap-4">
+    {EVENTS.map((e) => (
+      <EventSlotCard key={e.id} event={e} />
+    ))}
+  </div>
+
+  {/* Right-side image wall uses the first event for now */}
+  <ImageRail images={EVENTS[0]?.images} />
+</div>
+
             )}
           </div>
         </section>
