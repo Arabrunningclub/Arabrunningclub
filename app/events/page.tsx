@@ -30,8 +30,7 @@ const EVENTS: EventSlot[] = [
       "/images/pilates-2.jpg",
       "/images/pilates-3.jpg",
       "/images/pilates-4.jpg",
-      "/images/pilates-5.jpg",
-      "/images/pilates-6.jpg",
+     
     ],
     description:
       "Beginner-friendly premium pilates experience. Drinks + snacks included. RSVP so we can plan mats, spacing, and the overall setup.",
