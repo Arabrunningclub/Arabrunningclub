@@ -40,7 +40,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [mounted, isDark])
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black dark:bg-[#181C14] dark:text-white transition-colors">
+  <div className="min-h-screen flex flex-col text-black dark:text-white transition-colors">
       <header className="fixed top-0 left-0 right-0 z-50 h-20 bg-white/10 dark:bg-black/10 backdrop-blur-md border-b border-white/10 dark:border-white/10 shadow-none text-black dark:text-white">
         <nav className="container mx-auto h-20 px-0 py-0 flex justify-between items-center">
           <Link href="/" className="relative w-24 h-24">

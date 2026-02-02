@@ -42,18 +42,16 @@ export default function About() {
                     <p className="text-lg opacity-80">
                       Welcome to Arab Running Club. Our aim is simple: to unite
                       and empower Arabs across the Detroit metropolitan area
-                      through organized runs and social events.
+                      through recreational and social events.
                     </p>
                     <p className="text-lg opacity-80 mt-4">
                       Let’s work together to make a difference. We’re excited to
                       collaborate with other organizations as we amplify our
-                      impact. Lace up your shoes and take the stride towards a
-                      more connected and empowered Arab community!
+                      impact. 
                     </p>
                     <p className="text-lg opacity-80 mt-4">
                       We recognize the importance of lifting each other up. Our
-                      commitment goes beyond personal wellness. As we hit the
-                      pavement, we focus on giving back. Through fundraising
+                      commitment goes beyond personal wellness. We focus on giving back. Through fundraising
                       efforts and support for various charities, we aim to
                       create a lasting impact, not only in our local community
                       but also by supporting our home countries.
@@ -63,7 +61,7 @@ export default function About() {
                     <h2 className="text-2xl font-bold mt-8 mb-4">Our Vision</h2>
                     <p className="text-lg opacity-80">
                       We envision a thriving Arab community fueled by the joy of
-                      running and active living—a group where every step brings
+                      fitness and health. A group where every step brings
                       us closer regardless of cultural or spiritual background.
                     </p>
 
@@ -82,13 +80,12 @@ export default function About() {
                       Join the Movement
                     </h2>
                     <p className="text-lg opacity-80">
-                      Arab Running Club is more than just a running group—it's a
-                      movement. We hold all sports events and activities to promote
+                      Arab Running Club is more than just a running group—we hold all sports events and activities to promote
                       fitness and well-being. Together, we stay active, stay connected, and
                       stay inspired. Whether you're a seasoned runner or just
                       starting out, there's a place for you here.
                     </p>
-                    <p className="text-xl italic font-semibold mt-6">.اركض بقوة</p>
+                    <p className="text-xl italic font-semibold mt-6">.Everyone is welcome!</p>
                     <Link
                       href="/events"
                       className="inline-block mt-8 px-6 py-2 bg-white text-black border border-black font-bold rounded-full hover:bg-black hover:text-white transition-colors"
