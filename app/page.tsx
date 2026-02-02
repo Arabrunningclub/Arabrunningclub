@@ -62,7 +62,7 @@ export default function HomePage() {
       {/* Overlay content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
       <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg text-black dark:text-gray-200">
-        More Than Just a Running Club.
+        ARC
       </h1>
       <p className="mt-4 text-lg md:text-xl text-black dark:text-gray-200 max-w-2xl">
   Join a community that inspires, motivates, and connects through the love of fitness.
