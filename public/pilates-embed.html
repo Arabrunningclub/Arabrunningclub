@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Galentine’s Pilates RSVP</title>
+
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+
+      #stage {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, #ff4d6d, #ff758f);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: white;
+      }
+
+      #hearts {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .card {
+        position: relative;
+        z-index: 2;
+        background: rgba(0, 0, 0, 0.18);
+        padding: 36px 30px;
+        border-radius: 24px;
+        width: min(420px, 90vw);
+        box-shadow: 0 18px 55px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(6px);
+      }
+
+      h1 { font-size: 30px; margin: 0 0 14px; }
+      p { font-size: 16px; line-height: 1.45; margin: 0 0 22px; }
+
+      .buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+      }
+
+      button {
+        font-size: 16px;
+        padding: 12px 22px;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+        transition: filter 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+      }
+
+      button:active { filter: brightness(0.95); }
+      #yes { background: #ff76b4; color: white; transform-origin: center; }
+      #no { background: #ff76b4; color: white; }
+
+      .form { display: grid; gap: 10px; margin: 12px 0 12px; }
+
+      .form input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.22);
+        background: rgba(255,255,255,0.14);
+        color: white;
+        outline: none;
+        font-size: 14px;
+      }
+
+      .form input::placeholder { color: rgba(255,255,255,0.85); }
+
+      .form input:focus {
+        border-color: rgba(255,255,255,0.42);
+        background: rgba(255,255,255,0.18);
+      }
+
+      .slots { display: grid; gap: 12px; margin-top: 8px; }
+
+      .slot {
+        width: 100%;
+        text-align: left;
+        border-radius: 18px;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        color: white;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+        transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
+      }
+
+      .slot:hover { transform: translateY(-2px); filter: brightness(1.02); background: rgba(255,255,255,0.19); }
+      .slot-time { font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
+      .slot-sub { margin-top: 4px; font-size: 13px; opacity: 0.95; }
+      .spots { font-weight: 800; }
+
+      .slot.full { opacity: 0.55; cursor: not-allowed; }
+      .slot.full:hover { transform: none; filter: none; }
+
+      .heart {
+        position: absolute;
+        opacity: 0.95;
+        transform: translate(-50%, -50%);
+        animation: floatUp 4s linear forwards;
+        filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.2));
+      }
+
+      @keyframes floatUp {
+        0% { transform: translate(-50%, -50%) translateY(0) scale(0.25); opacity: 0; }
+        12% { opacity: 0.95; }
+        100% { transform: translate(-50%, -50%) translateY(-260px) scale(2.8); opacity: 0; }
+      }
+
+      .shake { animation: shake 0.22s linear 1; }
+      @keyframes shake {
+        0% { transform: translateX(0); }
+        20% { transform: translateX(-3px); }
+        40% { transform: translateX(3px); }
+        60% { transform: translateX(-2px); }
+        80% { transform: translateX(2px); }
+        100% { transform: translateX(0); }
+      }
+
+      .bottom-note {
+        position: absolute;
+        left: 50%;
+        bottom: 14px;
+        transform: translateX(-50%);
+        margin: 0;
+        font-size: 12px;
+        opacity: 0.85;
+        letter-spacing: 0.2px;
+        z-index: 3;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="stage">
+      <div id="hearts"></div>
+
+      <div class="card" id="card">
+        <h1>Hey😏💕</h1>
+        <p>
+          <br />
+          Are you ready for Galentine’s Pilates @ Wayne State <br />
+          Wed Feb 11 • 11am–2pm? 🌹🧘‍♀️
+        </p>
+
+        <div class="buttons">
+          <button id="yes" type="button" onclick="sayYes()">Yes 💖</button>
+          <button id="no" type="button" onmouseenter="moveNo()" onpointerdown="moveNo()">
+            No💔
+          </button>
+        </div>
+      </div>
+
+      <p class="bottom-note" id="note">Psst… “No” is a little shy 😈</p>
+    </div>
+
+    <script>
+      // ---------- NO BUTTON SOUND (Google Drive direct link)
+const noSound = new Audio(
+  "https://drive.google.com/uc?export=download&id=1MtujUl_ES9NUWjQK7vRvwUo9YaESUgun"
+);
+noSound.volume = 0.6;
+noSound.preload = "auto";
+
+// --------- VIBRATION (Android may work; iPhone usually ignores)
+function vibe(pattern = [25]) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  } catch (_) {}
+}
+
+const stage = document.getElementById("stage");
+const heartsLayer = document.getElementById("hearts");
+
+// ✅ Your Apps Script Web App URL
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbywWCs5D_n_OrjIv76gGcqtVSnaAf_NDjIHpadi7SyELLGad2oMgOyE-FQSKYshitNC/exec";
+
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(n, max));
+}
+
+function rectsOverlap(a, b) {
+  return !(
+    a.right <= b.left ||
+    a.left >= b.right ||
+    a.bottom <= b.top ||
+    a.top >= b.bottom
+  );
+}
+
+// --------- HEARTS
+function spawnHeart(x, y) {
+  const heart = document.createElement("div");
+  heart.className = "heart";
+  heart.textContent = "💗";
+
+  const size = 10 + Math.random() * 22;
+  heart.style.fontSize = size + "px";
+  heart.style.left = x + "px";
+  heart.style.top = y + "px";
+
+  heartsLayer.appendChild(heart);
+  heart.addEventListener("animationend", () => heart.remove());
+}
+
+// background hearts
+setInterval(() => {
+  spawnHeart(
+    Math.random() * stage.clientWidth,
+    Math.random() * stage.clientHeight
+  );
+}, 340);
+
+function burstHearts(
+  count = 14,
+  x = stage.clientWidth / 2,
+  y = stage.clientHeight / 2
+) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const spreadX = (Math.random() - 0.5) * 280;
+      const spreadY = (Math.random() - 0.5) * 180;
+      spawnHeart(x + spreadX, y + spreadY);
+    }, i * 14);
+  }
+}
+
+// --------- API
+async function loadAvailability() {
+  try {
+    const res = await fetch(`${API_URL}?action=availability`);
+    const data = await res.json();
+
+    const a = data?.availability?.["11:30-12:30"];
+    const b = data?.availability?.["1:00-2:00"];
+
+    const spotsA = document.getElementById("spotsA");
+    const spotsB = document.getElementById("spotsB");
+    const slotA = document.getElementById("slotA");
+    const slotB = document.getElementById("slotB");
+
+    if (spotsA && a) spotsA.textContent = `${a.left} spots left`;
+    if (spotsB && b) spotsB.textContent = `${b.left} spots left`;
+
+    if (slotA && a) {
+      if (a.left <= 0) {
+        slotA.classList.add("full");
+        slotA.disabled = true;
+        if (spotsA) spotsA.textContent = "Full 💔";
+      } else {
+        slotA.classList.remove("full");
+        slotA.disabled = false;
+      }
+    }
+
+    if (slotB && b) {
+      if (b.left <= 0) {
+        slotB.classList.add("full");
+        slotB.disabled = true;
+        if (spotsB) spotsB.textContent = "Full 💔";
+      } else {
+        slotB.classList.remove("full");
+        slotB.disabled = false;
+      }
+    }
+  } catch (err) {
+    const msg = document.getElementById("msg");
+    if (msg) msg.textContent = "Couldn’t load spots right now 😭 Try again in a sec.";
+  }
+}
+
+// ✅ IMPORTANT FIX: no JSON header (avoids CORS preflight on Apps Script)
+async function postRSVP(payload) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload) // sent as text/plain by default
+  });
+  return res.json();
+}
+
+/* -------------------------
+   STEP 2: Show RSVP + slots
+-------------------------- */
+let availabilityRefreshTimer = null;
+
+function showSlotPicker() {
+  const card = document.getElementById("card");
+  const note =
+    document.getElementById("note") || document.querySelector(".bottom-note");
+
+  if (note) note.textContent = "Room reserved 11:00–2:00pm 💞✨";
+
+  card.innerHTML = `
+    <h1 style="margin:0 0 10px;">YAYYYY 💘🎉</h1>
+
+    <p style="margin:0 0 14px; line-height:1.55;">
+      Yay! 💖 Both classes are in the Student Center Dance Room 020 ✨
+      <br /><br />
+      Drop your info + pick a time 🧘‍♀️🌸
+    </p>
+
+    <div class="form">
+      <input id="rsvpName"  type="text"  placeholder="Your name 💕" autocomplete="name" />
+      <input id="rsvpEmail" type="email" placeholder="Email (for confirmation + reminder) ✉️" autocomplete="email" />
+      <input id="rsvpPhone" type="tel"   placeholder="Phone (optional) 📱" autocomplete="tel" />
+    </div>
+
+    <div class="slots">
+      <button class="slot" id="slotA" type="button" onclick="chooseSlot('11:30-12:30')">
+        <div class="slot-time">11:30–12:30</div>
+        <div class="slot-sub">
+          Early class 💖 • <span class="spots" id="spotsA">Loading…</span>
+        </div>
+      </button>
+
+      <button class="slot" id="slotB" type="button" onclick="chooseSlot('1:00-2:00')">
+        <div class="slot-time">1:00–2:00</div>
+        <div class="slot-sub">
+          Later class 💅✨ • <span class="spots" id="spotsB">Loading…</span>
+        </div>
+      </button>
+    </div>
+
+    <p style="margin:12px 0 0; font-size:12px; opacity:.9;">
+      Thank you💞
+    </p>
+
+    <p id="msg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
+  `;
+
+  loadAvailability();
+  if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
+  availabilityRefreshTimer = setInterval(loadAvailability, 12000);
+}
+
+/* -------------------------
+   RSVP SUBMIT
+-------------------------- */
+async function chooseSlot(slot) {
+  const name = (document.getElementById("rsvpName")?.value || "").trim();
+  const email = (document.getElementById("rsvpEmail")?.value || "").trim();
+  const phone = (document.getElementById("rsvpPhone")?.value || "").trim();
+  const msg = document.getElementById("msg");
+
+  if (!name) {
+    if (msg) msg.textContent = "Add your name first bestie 💕";
+    return;
+  }
+  if (!email) {
+    if (msg) msg.textContent = "Add your email so we can confirm + remind you ✉️💖";
+    return;
+  }
+
+  const slotA = document.getElementById("slotA");
+  const slotB = document.getElementById("slotB");
+  if (slotA) slotA.disabled = true;
+  if (slotB) slotB.disabled = true;
+
+  if (msg) msg.textContent = "Saving your spot… 💞";
+
+  try {
+    const data = await postRSVP({ name, email, phone, slot });
+
+    if (!data.ok) {
+      if (msg) msg.textContent = data.error || "Something went wrong 💔";
+      await loadAvailability();
+      if (slotA) slotA.disabled = slotA.classList.contains("full");
+      if (slotB) slotB.disabled = slotB.classList.contains("full");
+      return;
+    }
+
+    vibe([35, 30, 35]);
+    burstHearts(40, stage.clientWidth / 2, stage.clientHeight / 2);
+
+    if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
+
+    const card = document.getElementById("card");
+    card.innerHTML = `
+      <h1 style="margin:0 0 10px;">You’re booked! 🥰💞</h1>
+      <p style="margin:0; line-height:1.5;">
+        Slot chosen: <b>${slot}</b> ⏰<br/><br/>
+        Check your email for confirmation ✉️✨
+      </p>
+      <p style="margin:14px 0 0; font-size:12px; opacity:.9;">
+        Room reserved, Thank you💕
+      </p>
+    `;
+  } catch (err) {
+    if (msg) msg.textContent = "Couldn’t save right now 😭 Try again.";
+    await loadAvailability();
+    if (slotA) slotA.disabled = slotA.classList.contains("full");
+    if (slotB) slotB.disabled = slotB.classList.contains("full");
+  }
+}
+
+/* -------------------------
+   YES ACTION (go to page 2)
+-------------------------- */
+function sayYes() {
+  const noBtn = document.getElementById("no");
+  if (noBtn) noBtn.remove();
+
+  vibe([35, 30, 35]);
+  burstHearts(30, stage.clientWidth / 2, stage.clientHeight / 2);
+
+  setTimeout(() => {
+    showSlotPicker();
+    setTimeout(() => burstHearts(24, stage.clientWidth / 2, stage.clientHeight / 2), 120);
+  }, 120);
+}
+
+/* -------------------------
+   NO BUTTON (runaway)
+-------------------------- */
+let noIsFloating = false;
+let noMoves = 0;
+
+function moveNo() {
+  const no = document.getElementById("no");
+  const yes = document.getElementById("yes");
+  if (!no || !yes) return;
+
+  noSound.currentTime = 0;
+  noSound.play().catch(() => {});
+
+  vibe([20]);
+  no.classList.remove("shake");
+  void no.offsetWidth;
+  no.classList.add("shake");
+
+  const stageRect = stage.getBoundingClientRect();
+
+  if (!noIsFloating) {
+    const placeholder = document.createElement("span");
+    placeholder.style.display = "inline-block";
+    placeholder.style.width = no.offsetWidth + "px";
+    placeholder.style.height = no.offsetHeight + "px";
+    no.parentNode.insertBefore(placeholder, no);
+
+    const r = no.getBoundingClientRect();
+    stage.appendChild(no);
+
+    no.style.position = "absolute";
+    no.style.zIndex = "9999";
+    no.style.left = r.left - stageRect.left + "px";
+    no.style.top = r.top - stageRect.top + "px";
+
+    noIsFloating = true;
+  }
+
+  noMoves += 1;
+  const yesScale = Math.min(1 + noMoves * 0.07, 2.2);
+  yes.style.transform = `scale(${yesScale})`;
+
+  const padX = 20;
+  const padTop = 70;
+  const padBottom = 110;
+
+  const noW = no.offsetWidth;
+  const noH = no.offsetHeight;
+
+  const minX = padX;
+  const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+
+  const minY = padTop;
+  const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+
+  const yesRect = yes.getBoundingClientRect();
+  const avoidMargin = 34;
+
+  const avoid = {
+    left: yesRect.left - stageRect.left - avoidMargin,
+    top: yesRect.top - stageRect.top - avoidMargin,
+    right: yesRect.right - stageRect.left + avoidMargin,
+    bottom: yesRect.bottom - stageRect.top + avoidMargin,
+  };
+
+  let x = minX, y = minY, tries = 0;
+
+  do {
+    x = Math.random() * (maxX - minX) + minX;
+    y = Math.random() * (maxY - minY) + minY;
+    tries++;
+  } while (
+    rectsOverlap({ left: x, top: y, right: x + noW, bottom: y + noH }, avoid) &&
+    tries < 90
+  );
+
+  x = clamp(x, minX, maxX);
+  y = clamp(y, minY, maxY);
+
+  no.style.left = x + "px";
+  no.style.top = y + "px";
+
+  burstHearts(7, x + noW / 2, y + noH / 2);
+}
+
+window.addEventListener("resize", () => {
+  const no = document.getElementById("no");
+  if (!noIsFloating || !no) return;
+
+  const noW = no.offsetWidth;
+  const noH = no.offsetHeight;
+
+  const padX = 20;
+  const padTop = 70;
+  const padBottom = 110;
+
+  const minX = padX;
+  const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+
+  const minY = padTop;
+  const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+
+  const curX = parseFloat(no.style.left) || minX;
+  const curY = parseFloat(no.style.top) || minY;
+
+  no.style.left = clamp(curX, minX, maxX) + "px";
+  no.style.top = clamp(curY, minY, maxY) + "px";
+});
+    </script>
+  </body>
+</html>
