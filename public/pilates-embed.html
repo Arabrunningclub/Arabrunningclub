@@ -89,19 +89,19 @@
       .slots { display: grid; gap: 12px; margin-top: 8px; }
 
       .slot {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
-  border-radius: 18px;
-  padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: white;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
-  transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
-}
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+        border-radius: 18px;
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        color: white;
+        box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+        transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
+      }
 
       .slot:hover { transform: translateY(-2px); filter: brightness(1.02); background: rgba(255,255,255,0.19); }
       .slot-time { font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
@@ -112,18 +112,19 @@
       .slot.full:hover { transform: none; filter: none; background: rgba(255, 255, 255, 0.16); }
 
       .slot-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
-.slot-price {
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  opacity: 0.95;
-  padding-left: 16px;
-}
+      .slot-price {
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        opacity: 0.95;
+        padding-left: 16px;
+      }
+
       .heart {
         position: absolute;
         opacity: 0.95;
@@ -187,377 +188,652 @@
     </div>
 
     <script>
-      // ---------- NO BUTTON SOUND (Google Drive direct link)
-const noSound = new Audio(
-  "https://drive.google.com/uc?export=download&id=1MtujUl_ES9NUWjQK7vRvwUo9YaESUgun"
-);
-noSound.volume = 0.6;
-noSound.preload = "auto";
-
-// --------- VIBRATION (Android may work; iPhone usually ignores)
-function vibe(pattern = [25]) {
-  try {
-    if (navigator.vibrate) navigator.vibrate(pattern);
-  } catch (_) {}
-}
-
-const stage = document.getElementById("stage");
-const heartsLayer = document.getElementById("hearts");
-
-// ✅ Your Apps Script Web App URL
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbywWCs5D_n_OrjIv76gGcqtVSnaAf_NDjIHpadi7SyELLGad2oMgOyE-FQSKYshitNC/exec";
-
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(n, max));
-}
-
-function rectsOverlap(a, b) {
-  return !(
-    a.right <= b.left ||
-    a.left >= b.right ||
-    a.bottom <= b.top ||
-    a.top >= b.bottom
+  // ---------- NO BUTTON SOUND (Google Drive direct link)
+  const noSound = new Audio(
+    "https://drive.google.com/uc?export=download&id=1MtujUl_ES9NUWjQK7vRvwUo9YaESUgun"
   );
-}
+  noSound.volume = 0.6;
+  noSound.preload = "auto";
 
-// --------- HEARTS
-function spawnHeart(x, y) {
-  const heart = document.createElement("div");
-  heart.className = "heart";
-  heart.textContent = "💗";
-
-  const size = 10 + Math.random() * 22;
-  heart.style.fontSize = size + "px";
-  heart.style.left = x + "px";
-  heart.style.top = y + "px";
-
-  heartsLayer.appendChild(heart);
-  heart.addEventListener("animationend", () => heart.remove());
-}
-
-// background hearts
-setInterval(() => {
-  spawnHeart(
-    Math.random() * stage.clientWidth,
-    Math.random() * stage.clientHeight
-  );
-}, 340);
-
-function burstHearts(
-  count = 14,
-  x = stage.clientWidth / 2,
-  y = stage.clientHeight / 2
-) {
-  for (let i = 0; i < count; i++) {
-    setTimeout(() => {
-      const spreadX = (Math.random() - 0.5) * 280;
-      const spreadY = (Math.random() - 0.5) * 180;
-      spawnHeart(x + spreadX, y + spreadY);
-    }, i * 14);
+  // --------- VIBRATION (Android may work; iPhone usually ignores)
+  function vibe(pattern = [25]) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (_) {}
   }
-}
 
-// --------- API
-async function loadAvailability() {
-  try {
-    const res = await fetch(`${API_URL}?action=availability`);
-    const data = await res.json();
+  const stage = document.getElementById("stage");
+  const heartsLayer = document.getElementById("hearts");
 
-    const a = data?.availability?.["11:30-12:30"];
-    const b = data?.availability?.["1:00-2:00"];
+  // ✅ Your Apps Script Web App URL
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbywWCs5D_n_OrjIv76gGcqtVSnaAf_NDjIHpadi7SyELLGad2oMgOyE-FQSKYshitNC/exec";
 
-    const spotsA = document.getElementById("spotsA");
-    const spotsB = document.getElementById("spotsB");
-    const slotA = document.getElementById("slotA");
-    const slotB = document.getElementById("slotB");
+  // --- Payments
+  // If this file is served from your Next.js site, this works.
+  // If you open the HTML directly (file://) you MUST set this to your full domain:
+  // e.g. const CHECKOUT_API = "https://www.arab-runningclub.com/api/checkout";
+  const CHECKOUT_API = "/api/checkout";
 
-    if (spotsA && a) spotsA.textContent = `${a.left} spots left`;
-    if (spotsB && b) spotsB.textContent = `${b.left} spots left`;
+  const PRICE_STRIPE = 15.5; // Stripe price (covers fees)
+  const PRICE_LATER = 15;    // Zelle / in-person
 
-    if (slotA && a) {
-      if (a.left <= 0) {
-        slotA.classList.add("full");
-        slotA.disabled = true;
-        if (spotsA) spotsA.textContent = "Full 💔";
-      } else {
-        slotA.classList.remove("full");
-        slotA.disabled = false;
-      }
+  // Put your Zelle QR image somewhere public.
+  // EASIEST: put it in your Next /public folder as /zelle-qr.png then set:
+  // const ZELLE_QR_IMG = "/zelle-qr.png";
+  const ZELLE_QR_IMG = "/zelle-qr.jpg"; // <-- paste URL or "/zelle-qr.png"
+
+  // Optional: show where to Zelle
+  const ZELLE_PAY_TO = "Adnan / 3137530035 / arabrunningclub@gmail.com";
+
+  // ----------------------------
+  // RSVP DRAFT (prevents retyping)
+  // ----------------------------
+  const DRAFT_KEY = "pilates_rsvp_draft_v1";
+
+  function saveDraft_(obj) {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(obj));
+    } catch (_) {}
+  }
+
+  function loadDraft_() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
     }
+  }
 
-    if (slotB && b) {
-      if (b.left <= 0) {
-        slotB.classList.add("full");
-        slotB.disabled = true;
-        if (spotsB) spotsB.textContent = "Full 💔";
-      } else {
-        slotB.classList.remove("full");
-        slotB.disabled = false;
-      }
+  function clearDraft_() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch (_) {}
+  }
+
+  // State for multi-step flow
+  let pendingRSVP = null; // { name, email, phone, slot, rsvpId? }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(n, max));
+  }
+
+  function rectsOverlap(a, b) {
+    return !(
+      a.right <= b.left ||
+      a.left >= b.right ||
+      a.bottom <= b.top ||
+      a.top >= b.bottom
+    );
+  }
+
+  // --------- HEARTS
+  function spawnHeart(x, y) {
+    const heart = document.createElement("div");
+    heart.className = "heart";
+    heart.textContent = "💗";
+
+    const size = 10 + Math.random() * 22;
+    heart.style.fontSize = size + "px";
+    heart.style.left = x + "px";
+    heart.style.top = y + "px";
+
+    heartsLayer.appendChild(heart);
+    heart.addEventListener("animationend", () => heart.remove());
+  }
+
+  // background hearts
+  setInterval(() => {
+    spawnHeart(
+      Math.random() * stage.clientWidth,
+      Math.random() * stage.clientHeight
+    );
+  }, 340);
+
+  function burstHearts(
+    count = 14,
+    x = stage.clientWidth / 2,
+    y = stage.clientHeight / 2
+  ) {
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const spreadX = (Math.random() - 0.5) * 280;
+        const spreadY = (Math.random() - 0.5) * 180;
+        spawnHeart(x + spreadX, y + spreadY);
+      }, i * 14);
     }
-  } catch (err) {
+  }
+
+  // --------- API
+  async function loadAvailability() {
+    try {
+      const res = await fetch(`${API_URL}?action=availability`);
+      const data = await res.json();
+
+      const a = data?.availability?.["11:30-12:30"];
+      const b = data?.availability?.["1:00-2:00"];
+
+      const spotsA = document.getElementById("spotsA");
+      const spotsB = document.getElementById("spotsB");
+      const slotA = document.getElementById("slotA");
+      const slotB = document.getElementById("slotB");
+
+      if (spotsA && a) spotsA.textContent = `${a.left} spots left`;
+      if (spotsB && b) spotsB.textContent = `${b.left} spots left`;
+
+      if (slotA && a) {
+        if (a.left <= 0) {
+          slotA.classList.add("full");
+          slotA.disabled = true;
+          if (spotsA) spotsA.textContent = "Full 💔";
+        } else {
+          slotA.classList.remove("full");
+          slotA.disabled = false;
+        }
+      }
+
+      if (slotB && b) {
+        if (b.left <= 0) {
+          slotB.classList.add("full");
+          slotB.disabled = true;
+          if (spotsB) spotsB.textContent = "Full 💔";
+        } else {
+          slotB.classList.remove("full");
+          slotB.disabled = false;
+        }
+      }
+    } catch (err) {
+      const msg = document.getElementById("msg");
+      if (msg) msg.textContent = "Couldn’t load spots right now 😭 Try again in a sec.";
+    }
+  }
+
+  // ✅ IMPORTANT FIX: no JSON header (avoids CORS preflight on Apps Script)
+  async function postRSVP(payload) {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload) // sent as text/plain by default
+    });
+    return res.json();
+  }
+
+  /* -------------------------
+     STEP 2: Show RSVP + slots
+  -------------------------- */
+  let availabilityRefreshTimer = null;
+
+  function showSlotPicker() {
+    const card = document.getElementById("card");
+    const note =
+      document.getElementById("note") || document.querySelector(".bottom-note");
+
+    if (note) note.textContent = "Room reserved 11:00–2:00pm 💞✨";
+
+    card.innerHTML = `
+      <h1 style="margin:0 0 10px;">YAYYYY 💘🎉</h1>
+
+      <p style="margin:0 0 14px; line-height:1.55;">
+        Yay! 💖 Both classes are in the Student Center Dance Room 020 ✨
+        <br /><br />
+        Drop your info + pick a time 🧘‍♀️🌸
+      </p>
+
+      <div class="form">
+        <input id="rsvpName"  type="text"  placeholder="Your name 💕" autocomplete="name" />
+        <input id="rsvpEmail" type="email" placeholder="Email (for confirmation + reminder) ✉️" autocomplete="email" />
+        <input id="rsvpPhone" type="tel"   placeholder="Phone (optional) 📱" autocomplete="tel" />
+      </div>
+
+      <div class="slots">
+        <button class="slot" id="slotA" type="button" onclick="chooseSlot('11:30-12:30')">
+          <div class="slot-left">
+            <div class="slot-time">11:30–12:30</div>
+            <div class="slot-sub">
+              Early class 💖 • <span class="spots" id="spotsA">25 spots left</span>
+            </div>
+          </div>
+          <div class="slot-price">$15</div>
+        </button>
+
+        <button class="slot" id="slotB" type="button" onclick="chooseSlot('1:00-2:00')">
+          <div class="slot-left">
+            <div class="slot-time">1:00–2:00</div>
+            <div class="slot-sub">
+              Later class 💅✨ • <span class="spots" id="spotsB">25 spots left</span>
+            </div>
+          </div>
+          <div class="slot-price">$15</div>
+        </button>
+      </div>
+
+      <p style="margin:12px 0 0; font-size:12px; opacity:.9;">
+        Thank you💞
+      </p>
+
+      <p id="msg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
+    `;
+
+    loadAvailability();
+    if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
+    availabilityRefreshTimer = setInterval(loadAvailability, 12000);
+
+    // restore draft
+    const draft = pendingRSVP || loadDraft_();
+    if (draft) {
+      pendingRSVP = draft;
+      const n = document.getElementById("rsvpName");
+      const e = document.getElementById("rsvpEmail");
+      const p = document.getElementById("rsvpPhone");
+      if (n) n.value = draft.name || "";
+      if (e) e.value = draft.email || "";
+      if (p) p.value = draft.phone || "";
+    }
+  }
+
+  /* -------------------------
+     SLOT PICK -> PAYMENT STEP
+  -------------------------- */
+  async function chooseSlot(slot) {
+    const name = (document.getElementById("rsvpName")?.value || "").trim();
+    const email = (document.getElementById("rsvpEmail")?.value || "").trim();
+    const phone = (document.getElementById("rsvpPhone")?.value || "").trim();
     const msg = document.getElementById("msg");
-    if (msg) msg.textContent = "Couldn’t load spots right now 😭 Try again in a sec.";
-  }
-}
 
-// ✅ IMPORTANT FIX: no JSON header (avoids CORS preflight on Apps Script)
-async function postRSVP(payload) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(payload) // sent as text/plain by default
-  });
-  return res.json();
-}
-
-/* -------------------------
-   STEP 2: Show RSVP + slots
--------------------------- */
-let availabilityRefreshTimer = null;
-
-function showSlotPicker() {
-  const card = document.getElementById("card");
-  const note =
-    document.getElementById("note") || document.querySelector(".bottom-note");
-
-  if (note) note.textContent = "Room reserved 11:00–2:00pm 💞✨";
-
-  card.innerHTML = `
-    <h1 style="margin:0 0 10px;">YAYYYY 💘🎉</h1>
-
-    <p style="margin:0 0 14px; line-height:1.55;">
-      Yay! 💖 Both classes are in the Student Center Dance Room 020 ✨
-      <br /><br />
-      Drop your info + pick a time 🧘‍♀️🌸
-    </p>
-
-    <div class="form">
-      <input id="rsvpName"  type="text"  placeholder="Your name 💕" autocomplete="name" />
-      <input id="rsvpEmail" type="email" placeholder="Email (for confirmation + reminder) ✉️" autocomplete="email" />
-      <input id="rsvpPhone" type="tel"   placeholder="Phone (optional) 📱" autocomplete="tel" />
-    </div>
-
-   <div class="slots">
-  <button class="slot" id="slotA" type="button" onclick="chooseSlot('11:30-12:30')">
-    <div class="slot-left">
-      <div class="slot-time">11:30–12:30</div>
-      <div class="slot-sub">
-        Early class 💖 • <span class="spots" id="spotsA">25 spots left</span>
-      </div>
-    </div>
-    <div class="slot-price">$15</div>
-  </button>
-
-  <button class="slot" id="slotB" type="button" onclick="chooseSlot('1:00-2:00')">
-    <div class="slot-left">
-      <div class="slot-time">1:00–2:00</div>
-      <div class="slot-sub">
-        Later class 💅✨ • <span class="spots" id="spotsB">25 spots left</span>
-      </div>
-    </div>
-    <div class="slot-price">$15</div>
-  </button>
-</div>
-
-
-    <p style="margin:12px 0 0; font-size:12px; opacity:.9;">
-      Thank you💞
-    </p>
-
-    <p id="msg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
-  `;
-
-  loadAvailability();
-  if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
-  availabilityRefreshTimer = setInterval(loadAvailability, 12000);
-}
-
-/* -------------------------
-   RSVP SUBMIT
--------------------------- */
-async function chooseSlot(slot) {
-  const name = (document.getElementById("rsvpName")?.value || "").trim();
-  const email = (document.getElementById("rsvpEmail")?.value || "").trim();
-  const phone = (document.getElementById("rsvpPhone")?.value || "").trim();
-  const msg = document.getElementById("msg");
-
-  if (!name) {
-    if (msg) msg.textContent = "Add your name first bestie 💕";
-    return;
-  }
-  if (!email) {
-    if (msg) msg.textContent = "Add your email so we can confirm + remind you ✉️💖";
-    return;
-  }
-
-  const slotA = document.getElementById("slotA");
-  const slotB = document.getElementById("slotB");
-  if (slotA) slotA.disabled = true;
-  if (slotB) slotB.disabled = true;
-
-  if (msg) msg.textContent = "Saving your spot… 💞";
-
-  try {
-    const data = await postRSVP({ name, email, phone, slot });
-
-    if (!data.ok) {
-      if (msg) msg.textContent = data.error || "Something went wrong 💔";
-      await loadAvailability();
-      if (slotA) slotA.disabled = slotA.classList.contains("full");
-      if (slotB) slotB.disabled = slotB.classList.contains("full");
+    if (!name) {
+      if (msg) msg.textContent = "Add your name first bestie 💕";
+      return;
+    }
+    if (!email) {
+      if (msg) msg.textContent = "Add your email so we can confirm + remind you ✉️💖";
       return;
     }
 
-    vibe([35, 30, 35]);
-    burstHearts(40, stage.clientWidth / 2, stage.clientHeight / 2);
-
     if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
+    availabilityRefreshTimer = null;
 
+    pendingRSVP = { name, email, phone, slot };
+    saveDraft_(pendingRSVP);
+
+    showPaymentStep_(slot);
+  }
+
+  function showPaymentStep_(slot) {
     const card = document.getElementById("card");
     card.innerHTML = `
+      <h1 style="margin:0 0 10px;">One more thing 💞</h1>
+
+      <p style="margin:0 0 14px; line-height:1.55;">
+        You picked: <b>${slot}</b><br/>
+        Choose how you want to pay:
+      </p>
+
+      <div style="display:grid; gap:12px; margin-top:10px;">
+        <button class="slot" type="button" onclick="payNowStripe_()">
+          <div class="slot-left">
+            <div class="slot-time">Pay now (Card)</div>
+            <div class="slot-sub">Stripe checkout • instant confirmation</div>
+          </div>
+          <div class="slot-price">$${PRICE_STRIPE.toFixed(2)}</div>
+        </button>
+
+        <button class="slot" type="button" onclick="payLaterZelle_()">
+          <div class="slot-left">
+            <div class="slot-time">Pay later (Zelle)</div>
+            <div class="slot-sub">No fees • pay anytime before class</div>
+          </div>
+          <div class="slot-price">$${PRICE_LATER}</div>
+        </button>
+
+        <button class="slot" type="button" onclick="payLaterInPerson_()">
+          <div class="slot-left">
+            <div class="slot-time">Pay in person</div>
+            <div class="slot-sub">Bring $${PRICE_LATER} day-of</div>
+          </div>
+          <div class="slot-price">$${PRICE_LATER}</div>
+        </button>
+      </div>
+
+      <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
+        Need to switch classes or cancel? Reply to your confirmation email so we can open your spot to someone else 💕
+      </p>
+
+      <p id="payMsg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
+
+      <div style="margin-top:14px; text-align:center;">
+        <button id="backBtn" type="button" onclick="showSlotPicker()" style="background: rgba(255,255,255,0.16); color:#fff;">
+          Back
+        </button>
+      </div>
+    `;
+  }
+
+  function setPayButtonsDisabled_(disabled) {
+    // disables payment buttons on payment screen
+    document.querySelectorAll(".slot").forEach((btn) => {
+      if (btn && btn.tagName === "BUTTON") btn.disabled = disabled;
+    });
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn) backBtn.disabled = disabled;
+  }
+
+  function showZelleInstructions_(slot) {
+    const card = document.getElementById("card");
+
+    const qrHtml = ZELLE_QR_IMG
+      ? `<img src="${ZELLE_QR_IMG}" alt="Zelle QR" style="width:min(260px, 70vw); border-radius:16px; border:1px solid rgba(255,255,255,0.25);" />`
+      : `<div style="padding:14px; border-radius:16px; border:1px dashed rgba(255,255,255,0.45); opacity:.95;">
+           Add your Zelle QR image URL in <b>ZELLE_QR_IMG</b>
+         </div>`;
+
+    vibe([35, 30, 35]);
+    burstHearts(35, stage.clientWidth / 2, stage.clientHeight / 2);
+
+    clearDraft_();
+
+    card.innerHTML = `
       <h1 style="margin:0 0 10px;">You’re booked! 🥰💞</h1>
-      <p style="margin:0; line-height:1.5;">
-        Slot chosen: <b>${slot}</b> ⏰<br/><br/>
+      <p style="margin:0 0 12px; line-height:1.55;">
+        Slot: <b>${slot}</b><br/>
+        Payment: <b>Zelle</b> ($${PRICE_LATER})<br/><br/>
+        Send $${PRICE_LATER} on Zelle to:<br/>
+        <b>${ZELLE_PAY_TO}</b>
+      </p>
+
+      <div style="display:flex; justify-content:center; margin:10px 0 12px;">
+        ${qrHtml}
+      </div>
+
+      <p style="margin:0; line-height:1.55;">
         Check your email for confirmation ✉️✨
       </p>
-      <p style="margin:14px 0 0; font-size:12px; opacity:.9;">
-        Room reserved, Thank you💕
+
+      <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
+        Need to switch classes or cancel? Reply to your confirmation email so we can open your spot to someone else 💕
       </p>
     `;
-  } catch (err) {
-    if (msg) msg.textContent = "Couldn’t save right now 😭 Try again.";
-    await loadAvailability();
-    if (slotA) slotA.disabled = slotA.classList.contains("full");
-    if (slotB) slotB.disabled = slotB.classList.contains("full");
-  }
-}
-
-/* -------------------------
-   YES ACTION (go to page 2)
--------------------------- */
-function sayYes() {
-  const noBtn = document.getElementById("no");
-  if (noBtn) noBtn.remove();
-
-  vibe([35, 30, 35]);
-  burstHearts(30, stage.clientWidth / 2, stage.clientHeight / 2);
-
-  setTimeout(() => {
-    showSlotPicker();
-    setTimeout(() => burstHearts(24, stage.clientWidth / 2, stage.clientHeight / 2), 120);
-  }, 120);
-}
-
-/* -------------------------
-   NO BUTTON (runaway)
--------------------------- */
-let noIsFloating = false;
-let noMoves = 0;
-
-function moveNo() {
-  const no = document.getElementById("no");
-  const yes = document.getElementById("yes");
-  if (!no || !yes) return;
-
-  noSound.currentTime = 0;
-  noSound.play().catch(() => {});
-
-  vibe([20]);
-  no.classList.remove("shake");
-  void no.offsetWidth;
-  no.classList.add("shake");
-
-  const stageRect = stage.getBoundingClientRect();
-
-  if (!noIsFloating) {
-    const placeholder = document.createElement("span");
-    placeholder.style.display = "inline-block";
-    placeholder.style.width = no.offsetWidth + "px";
-    placeholder.style.height = no.offsetHeight + "px";
-    no.parentNode.insertBefore(placeholder, no);
-
-    const r = no.getBoundingClientRect();
-    stage.appendChild(no);
-
-    no.style.position = "absolute";
-    no.style.zIndex = "9999";
-    no.style.left = r.left - stageRect.left + "px";
-    no.style.top = r.top - stageRect.top + "px";
-
-    noIsFloating = true;
   }
 
-  noMoves += 1;
-  const yesScale = Math.min(1 + noMoves * 0.07, 2.2);
-  yes.style.transform = `scale(${yesScale})`;
+  // Pay later (Zelle) -> saves a real RSVP immediately (counts as taken) then shows Zelle instructions
+  async function payLaterZelle_() {
+    const el = document.getElementById("payMsg");
+    if (!pendingRSVP) {
+      if (el) el.textContent = "Missing RSVP info — go back and try again.";
+      return;
+    }
 
-  const padX = 20;
-  const padTop = 70;
-  const padBottom = 110;
+    setPayButtonsDisabled_(true);
+    if (el) el.textContent = "Saving your spot… 💞";
 
-  const noW = no.offsetWidth;
-  const noH = no.offsetHeight;
+    try {
+      const data = await postRSVP({
+        ...pendingRSVP,
+        payChoice: "pay_later",
+        paymentStatus: "NOT PAID",
+        paymentMethod: "zelle",
+      });
 
-  const minX = padX;
-  const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+      if (!data.ok) {
+        if (el) el.textContent = data.error || "Something went wrong 💔";
+        return;
+      }
 
-  const minY = padTop;
-  const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+      if (data.rsvpId) {
+        pendingRSVP = { ...pendingRSVP, rsvpId: data.rsvpId };
+        saveDraft_(pendingRSVP);
+      }
 
-  const yesRect = yes.getBoundingClientRect();
-  const avoidMargin = 34;
+      showZelleInstructions_(pendingRSVP.slot);
+    } catch (err) {
+      if (el) el.textContent = "Couldn’t save right now 😭 Try again.";
+    } finally {
+      setPayButtonsDisabled_(false);
+    }
+  }
 
-  const avoid = {
-    left: yesRect.left - stageRect.left - avoidMargin,
-    top: yesRect.top - stageRect.top - avoidMargin,
-    right: yesRect.right - stageRect.left + avoidMargin,
-    bottom: yesRect.bottom - stageRect.top + avoidMargin,
-  };
+  // Pay later (in person) -> saves a real RSVP immediately (counts as taken) then shows success screen
+  async function payLaterInPerson_() {
+    const el = document.getElementById("payMsg");
+    if (!pendingRSVP) {
+      if (el) el.textContent = "Missing RSVP info — go back and try again.";
+      return;
+    }
 
-  let x = minX, y = minY, tries = 0;
+    setPayButtonsDisabled_(true);
+    if (el) el.textContent = "Saving your spot… 💞";
 
-  do {
-    x = Math.random() * (maxX - minX) + minX;
-    y = Math.random() * (maxY - minY) + minY;
-    tries++;
-  } while (
-    rectsOverlap({ left: x, top: y, right: x + noW, bottom: y + noH }, avoid) &&
-    tries < 90
-  );
+    try {
+      const data = await postRSVP({
+        ...pendingRSVP,
+        payChoice: "pay_later",
+        paymentStatus: "NOT PAID",
+        paymentMethod: "in_person",
+      });
 
-  x = clamp(x, minX, maxX);
-  y = clamp(y, minY, maxY);
+      if (!data.ok) {
+        if (el) el.textContent = data.error || "Something went wrong 💔";
+        return;
+      }
 
-  no.style.left = x + "px";
-  no.style.top = y + "px";
+      if (data.rsvpId) {
+        pendingRSVP = { ...pendingRSVP, rsvpId: data.rsvpId };
+        saveDraft_(pendingRSVP);
+      }
 
-  burstHearts(7, x + noW / 2, y + noH / 2);
-}
+      const card = document.getElementById("card");
+      vibe([35, 30, 35]);
+      burstHearts(35, stage.clientWidth / 2, stage.clientHeight / 2);
 
-window.addEventListener("resize", () => {
-  const no = document.getElementById("no");
-  if (!noIsFloating || !no) return;
+      clearDraft_();
 
-  const noW = no.offsetWidth;
-  const noH = no.offsetHeight;
+      card.innerHTML = `
+        <h1 style="margin:0 0 10px;">You’re booked! 🥰💞</h1>
+        <p style="margin:0; line-height:1.55;">
+          Slot: <b>${pendingRSVP.slot}</b><br/>
+          Payment: <b>In person</b> ($${PRICE_LATER})<br/><br/>
+          Check your email for confirmation ✉️✨
+        </p>
+        <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
+          Need to switch classes or cancel? Reply to your confirmation email so we can open your spot 💕
+        </p>
+      `;
+    } catch (err) {
+      if (el) el.textContent = "Couldn’t save right now 😭 Try again.";
+    } finally {
+      setPayButtonsDisabled_(false);
+    }
+  }
 
-  const padX = 20;
-  const padTop = 70;
-  const padBottom = 110;
+  // Pay now (Card) -> creates/uses a HOLD (10 min) then sends to Stripe.
+  // Seat counts only while HOLD is active; webhook flips to PAID.
+  async function payNowStripe_() {
+    const el = document.getElementById("payMsg");
+    if (!pendingRSVP) {
+      if (el) el.textContent = "Missing RSVP info — go back and try again.";
+      return;
+    }
 
-  const minX = padX;
-  const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+    setPayButtonsDisabled_(true);
+    if (el) el.textContent = "Holding your spot… then sending you to checkout 💞";
 
-  const minY = padTop;
-  const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+    try {
+      // Reuse existing hold if we already created one
+      let rsvpId = pendingRSVP.rsvpId;
 
-  const curX = parseFloat(no.style.left) || minX;
-  const curY = parseFloat(no.style.top) || minY;
+      if (!rsvpId) {
+        const data = await postRSVP({
+          ...pendingRSVP,
+          payChoice: "pay_now",
+          paymentStatus: "NOT PAID",
+          paymentMethod: "stripe",
+        });
 
-  no.style.left = clamp(curX, minX, maxX) + "px";
-  no.style.top = clamp(curY, minY, maxY) + "px";
-});
-    </script>
+        if (!data.ok) {
+          if (el) el.textContent = data.error || "Something went wrong 💔";
+          return;
+        }
+
+        rsvpId = data.rsvpId;
+        if (!rsvpId) {
+          if (el) el.textContent = "Missing RSVP id from server 💔";
+          return;
+        }
+
+        pendingRSVP = { ...pendingRSVP, rsvpId };
+        saveDraft_(pendingRSVP);
+      }
+
+      const r = await fetch(CHECKOUT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: PRICE_STRIPE,
+          rsvpId,
+          email: pendingRSVP.email,
+        }),
+      });
+
+      const out = await r.json().catch(() => ({}));
+      if (!out?.url) {
+        if (el) el.textContent = out?.error || "Couldn’t start checkout 💔";
+        return;
+      }
+
+      // Don’t clear draft here — cancel should return with their info intact.
+      window.location.href = out.url;
+    } catch (err) {
+      if (el) el.textContent = "Checkout failed 😭 Try again.";
+    } finally {
+      setPayButtonsDisabled_(false);
+    }
+  }
+
+  /* -------------------------
+     YES ACTION
+  -------------------------- */
+  function sayYes() {
+    const noBtn = document.getElementById("no");
+    if (noBtn) noBtn.remove();
+
+    vibe([35, 30, 35]);
+    burstHearts(30, stage.clientWidth / 2, stage.clientHeight / 2);
+
+    setTimeout(() => {
+      showSlotPicker();
+      setTimeout(() => burstHearts(24, stage.clientWidth / 2, stage.clientHeight / 2), 120);
+    }, 120);
+  }
+
+  /* -------------------------
+     NO BUTTON (runaway)
+  -------------------------- */
+  let noIsFloating = false;
+  let noMoves = 0;
+
+  function moveNo() {
+    const no = document.getElementById("no");
+    const yes = document.getElementById("yes");
+    if (!no || !yes) return;
+
+    noSound.currentTime = 0;
+    noSound.play().catch(() => {});
+
+    vibe([20]);
+    no.classList.remove("shake");
+    void no.offsetWidth;
+    no.classList.add("shake");
+
+    const stageRect = stage.getBoundingClientRect();
+
+    if (!noIsFloating) {
+      const placeholder = document.createElement("span");
+      placeholder.style.display = "inline-block";
+      placeholder.style.width = no.offsetWidth + "px";
+      placeholder.style.height = no.offsetHeight + "px";
+      no.parentNode.insertBefore(placeholder, no);
+
+      const r = no.getBoundingClientRect();
+      stage.appendChild(no);
+
+      no.style.position = "absolute";
+      no.style.zIndex = "9999";
+      no.style.left = r.left - stageRect.left + "px";
+      no.style.top = r.top - stageRect.top + "px";
+
+      noIsFloating = true;
+    }
+
+    noMoves += 1;
+    const yesScale = Math.min(1 + noMoves * 0.07, 2.2);
+    yes.style.transform = `scale(${yesScale})`;
+
+    const padX = 20;
+    const padTop = 70;
+    const padBottom = 110;
+
+    const noW = no.offsetWidth;
+    const noH = no.offsetHeight;
+
+    const minX = padX;
+    const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+
+    const minY = padTop;
+    const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+
+    const yesRect = yes.getBoundingClientRect();
+    const avoidMargin = 34;
+
+    const avoid = {
+      left: yesRect.left - stageRect.left - avoidMargin,
+      top: yesRect.top - stageRect.top - avoidMargin,
+      right: yesRect.right - stageRect.left + avoidMargin,
+      bottom: yesRect.bottom - stageRect.top + avoidMargin,
+    };
+
+    let x = minX, y = minY, tries = 0;
+
+    do {
+      x = Math.random() * (maxX - minX) + minX;
+      y = Math.random() * (maxY - minY) + minY;
+      tries++;
+    } while (
+      rectsOverlap({ left: x, top: y, right: x + noW, bottom: y + noH }, avoid) &&
+      tries < 90
+    );
+
+    x = clamp(x, minX, maxX);
+    y = clamp(y, minY, maxY);
+
+    no.style.left = x + "px";
+    no.style.top = y + "px";
+
+    burstHearts(7, x + noW / 2, y + noH / 2);
+  }
+
+  window.addEventListener("resize", () => {
+    const no = document.getElementById("no");
+    if (!noIsFloating || !no) return;
+
+    const noW = no.offsetWidth;
+    const noH = no.offsetHeight;
+
+    const padX = 20;
+    const padTop = 70;
+    const padBottom = 110;
+
+    const minX = padX;
+    const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+
+    const minY = padTop;
+    const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+
+    const curX = parseFloat(no.style.left) || minX;
+    const curY = parseFloat(no.style.top) || minY;
+
+    no.style.left = clamp(curX, minX, maxX) + "px";
+    no.style.top = clamp(curY, minY, maxY) + "px";
+  });
+</script>
   </body>
 </html>
+      
