@@ -221,10 +221,11 @@
   // Put your Zelle QR image somewhere public.
   // EASIEST: put it in your Next /public folder as /zelle-qr.png then set:
   // const ZELLE_QR_IMG = "/zelle-qr.png";
-  const ZELLE_QR_IMG = "/zelle-qr.jpg"; // <-- paste URL or "/zelle-qr.png"
+  const ZELLE_QR_IMG = "/zelle-qr.jpg";
+ // <-- paste URL or "/zelle-qr.png"
 
   // Optional: show where to Zelle
-  const ZELLE_PAY_TO = "Adnan / 3137530035 / arabrunningclub@gmail.com";
+  const ZELLE_PAY_TO = "Adnan / 313-753-0035";
 
   // ----------------------------
   // RSVP DRAFT (prevents retyping)
@@ -520,12 +521,17 @@
   function showZelleInstructions_(slot) {
     const card = document.getElementById("card");
 
-    const qrHtml = ZELLE_QR_IMG
-      ? `<img src="${ZELLE_QR_IMG}" alt="Zelle QR" style="width:min(260px, 70vw); border-radius:16px; border:1px solid rgba(255,255,255,0.25);" />`
-      : `<div style="padding:14px; border-radius:16px; border:1px dashed rgba(255,255,255,0.45); opacity:.95;">
-           Add your Zelle QR image URL in <b>ZELLE_QR_IMG</b>
-         </div>`;
-
+    const qrHtml = `
+  <img
+    src="${ZELLE_QR_IMG}"
+    alt="Zelle QR"
+    style="width:min(260px, 70vw); border-radius:16px; border:1px solid rgba(255,255,255,0.25);"
+    onerror="this.style.display='none'; document.getElementById('qrFail').style.display='block';"
+  />
+  <div id="qrFail" style="display:none; padding:14px; border-radius:16px; border:1px dashed rgba(255,255,255,0.45); opacity:.95;">
+    QR image not found. Check the filename/path in <b>ZELLE_QR_IMG</b>.
+  </div>
+`;
     vibe([35, 30, 35]);
     burstHearts(35, stage.clientWidth / 2, stage.clientHeight / 2);
 
