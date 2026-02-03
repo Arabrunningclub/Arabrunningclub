@@ -221,7 +221,7 @@
   // Put your Zelle QR image somewhere public.
   // EASIEST: put it in your Next /public folder as /zelle-qr.png then set:
   // const ZELLE_QR_IMG = "/zelle-qr.png";
-  const ZELLE_QR_IMG = "/zelle-qr.jpg";
+  const ZELLE_QR_IMG = "/images/zelle-qr.jpg";
  // <-- paste URL or "/zelle-qr.png"
 
   // Optional: show where to Zelle
@@ -706,7 +706,9 @@
       }
 
       // Don’t clear draft here — cancel should return with their info intact.
-      window.location.href = out.url;
+     // Force top-level navigation (break out of iframes)
+if (window.top) window.top.location.href = out.url;
+else window.location.href = out.url;
     } catch (err) {
       if (el) el.textContent = "Checkout failed 😭 Try again.";
     } finally {
