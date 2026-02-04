@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import PilatesClient from "./PilatesClient";
 
 export const metadata: Metadata = {
   title: "Galentine’s Pilates | Arab Running Club",
-  description: "Join our Galentine’s Pilates session at Wayne State. Limited spots. Register now.",
-
+  description:
+    "Join our Galentine’s Pilates session at Wayne State. Limited spots. Register now.",
   openGraph: {
     title: "Galentine’s Pilates | Arab Running Club",
-    description: "Join our Galentine’s Pilates session at Wayne State. Limited spots.",
+    description:
+      "Join our Galentine’s Pilates session at Wayne State. Limited spots.",
     url: "https://www.arab-runningclub.com/pilates",
     siteName: "Arab Running Club",
     images: [
@@ -19,7 +21,6 @@ export const metadata: Metadata = {
     ],
     type: "website",
   },
-
   twitter: {
     card: "summary_large_image",
     title: "Galentine’s Pilates | Arab Running Club",
@@ -28,23 +29,6 @@ export const metadata: Metadata = {
   },
 };
 
-"use client";
-
-import Layout from "@/components/layout";
-
 export default function PilatesPage() {
-  return (
-    <Layout transparent>
-      <iframe
-        src="/pilates-embed.html"
-        title="Galentine's Pilates RSVP"
-        style={{
-          width: "100%",
-          height: "100vh", // key: fill viewport so header blurs the pink behind it
-          border: "none",
-          display: "block",
-        }}
-      />
-    </Layout>
-  );
+  return <PilatesClient />;
 }
