@@ -149,6 +149,28 @@
         100% { transform: translateX(0); }
       }
 
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 3px solid rgba(255,255,255,0.35);
+        border-top-color: rgba(255,255,255,0.95);
+        display: inline-block;
+        animation: spin 0.8s linear infinite;
+        vertical-align: -3px;
+        margin-right: 10px;
+      }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .big-status {
+        margin: 14px 0 0;
+        font-size: 16px;
+        font-weight: 800;
+        opacity: .98;
+        line-height: 1.35;
+      }
+
       .bottom-note {
         position: absolute;
         left: 50%;
@@ -256,6 +278,91 @@
   // State for multi-step flow
   let pendingRSVP = null; // { name, email, phone, slot, rsvpId? }
 
+  let stepStack = []; // holds step names like ["slots", "pay"]
+
+  function goStep(step) {
+    if (step === "slots") showSlotPicker();
+    if (step === "pay") showPaymentStep_(pendingRSVP?.slot || "");
+  }
+
+  function pushStep(step) {
+    if (stepStack[stepStack.length - 1] !== step) stepStack.push(step);
+  }
+
+  function backStep() {
+    if (stepStack.length <= 1) return;
+    stepStack.pop();
+    goStep(stepStack[stepStack.length - 1]);
+  }
+
+  function navBarHtml() {
+    return `
+      <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:14px;">
+        <button type="button" onclick="backStep()" aria-label="Back"
+          style="
+            background: rgba(255,255,255,0.18);
+            color:#fff;
+            border-radius:999px;
+            padding:14px 18px;
+            font-size:20px;
+            font-weight:800;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.22);
+            cursor:pointer;
+          ">
+          ←
+        </button>
+      </div>
+    `;
+  }
+
+  (function handleStatusFromQuery_() {
+    const qs = new URLSearchParams(window.location.search);
+    const status = qs.get("status");
+
+    if (!status) return;
+
+    // try to use stored draft so we can show the slot/email
+    const draft = loadDraft_();
+    if (draft) pendingRSVP = draft;
+
+    if (status === "success") {
+      const card = document.getElementById("card");
+      burstHearts(35, stage.clientWidth / 2, stage.clientHeight / 2);
+      clearDraft_();
+      card.innerHTML = `
+        <h1 style="margin:0 0 10px;">Paid ✅💖</h1>
+        <p style="margin:0; line-height:1.55;">
+          Your spot is confirmed.
+          <br/><br/>
+          Slot: <b>${pendingRSVP?.slot || ""}</b><br/>
+          Email: <b>${pendingRSVP?.email || ""}</b><br/><br/>
+          You'll get a confirmation email ✉️
+        </p>
+        <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
+          Need to cancel or switch? Reply to the confirmation email.
+        </p>
+      `;
+    }
+
+    if (status === "cancel") {
+      const card = document.getElementById("card");
+      card.innerHTML = `
+        <h1 style="margin:0 0 10px;">Payment canceled 💔</h1>
+        <p style="margin:0; line-height:1.55;">
+          Your payment wasn't completed.
+          <br/><br/>
+          If you still want the spot, pick "Pay now" again.
+        </p>
+        <div style="margin-top:14px; text-align:center;">
+          <button type="button" onclick="showSlotPicker()" style="background: rgba(255,255,255,0.16); color:#fff;">
+            Back to slots
+          </button>
+        </div>
+      `;
+    }
+  })();
+
   function clamp(n, min, max) {
     return Math.max(min, Math.min(n, max));
   }
@@ -267,6 +374,20 @@
       a.bottom <= b.top ||
       a.top >= b.bottom
     );
+  }
+
+  function setBusyMessage(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = "big-status";
+    el.innerHTML = `<span class="spinner"></span>${text}`;
+  }
+
+  function setPlainMessage(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = "big-status";
+    el.textContent = text;
   }
 
   // --------- HEARTS
@@ -320,6 +441,9 @@
       const slotA = document.getElementById("slotA");
       const slotB = document.getElementById("slotB");
 
+      if (spotsA) spotsA.textContent = "Loading…";
+      if (spotsB) spotsB.textContent = "Loading…";
+
       if (spotsA && a) spotsA.textContent = `${a.left} spots left`;
       if (spotsB && b) spotsB.textContent = `${b.left} spots left`;
 
@@ -344,8 +468,10 @@
           slotB.disabled = false;
         }
       }
-    } catch (err) {
-      const msg = document.getElementById("msg");
+    } catch (err) {      const spotsA = document.getElementById("spotsA");
+      const spotsB = document.getElementById("spotsB");
+      if (spotsA) spotsA.textContent = "Unavailable";
+      if (spotsB) spotsB.textContent = "Unavailable";      const msg = document.getElementById("msg");
       if (msg) msg.textContent = "Couldn’t load spots right now 😭 Try again in a sec.";
     }
   }
@@ -371,7 +497,10 @@
 
     if (note) note.textContent = "Room reserved 11:00–2:00pm 💞✨";
 
+    pushStep("slots");
+
     card.innerHTML = `
+      ${navBarHtml()}
       <h1 style="margin:0 0 10px;">YAYYYY 💘🎉</h1>
 
       <p style="margin:0 0 14px; line-height:1.55;">
@@ -391,7 +520,7 @@
           <div class="slot-left">
             <div class="slot-time">11:30–12:30</div>
             <div class="slot-sub">
-              Early class 💖 • <span class="spots" id="spotsA">25 spots left</span>
+              Early class 💖 • <span class="spots" id="spotsA">Loading…</span>
             </div>
           </div>
           <div class="slot-price">$15</div>
@@ -401,7 +530,7 @@
           <div class="slot-left">
             <div class="slot-time">1:00–2:00</div>
             <div class="slot-sub">
-              Later class 💅✨ • <span class="spots" id="spotsB">25 spots left</span>
+              Later class 💅✨ • <span class="spots" id="spotsB">Loading…</span>
             </div>
           </div>
           <div class="slot-price">$15</div>
@@ -456,12 +585,19 @@
     pendingRSVP = { name, email, phone, slot };
     saveDraft_(pendingRSVP);
 
+    pushStep("slots");
+    pushStep("pay");
+
     showPaymentStep_(slot);
   }
 
   function showPaymentStep_(slot) {
     const card = document.getElementById("card");
+    
+    pushStep("pay");
+    
     card.innerHTML = `
+      ${navBarHtml()}
       <h1 style="margin:0 0 10px;">One more thing 💞</h1>
 
       <p style="margin:0 0 14px; line-height:1.55;">
@@ -564,12 +700,12 @@
   async function payLaterZelle_() {
     const el = document.getElementById("payMsg");
     if (!pendingRSVP) {
-      if (el) el.textContent = "Missing RSVP info — go back and try again.";
+      setPlainMessage("payMsg", "Missing RSVP info — go back and try again.");
       return;
     }
 
     setPayButtonsDisabled_(true);
-    if (el) el.textContent = "Saving your spot… 💞";
+    setBusyMessage("payMsg", "Saving your spot… please wait 💞");
 
     try {
       const data = await postRSVP({
@@ -580,7 +716,7 @@
       });
 
       if (!data.ok) {
-        if (el) el.textContent = data.error || "Something went wrong 💔";
+        setPlainMessage("payMsg", data.error || "Something went wrong 💔");
         return;
       }
 
@@ -591,7 +727,7 @@
 
       showZelleInstructions_(pendingRSVP.slot);
     } catch (err) {
-      if (el) el.textContent = "Couldn’t save right now 😭 Try again.";
+      setPlainMessage("payMsg", "Couldn’t save right now 😭 Try again.");
     } finally {
       setPayButtonsDisabled_(false);
     }
@@ -601,12 +737,12 @@
   async function payLaterInPerson_() {
     const el = document.getElementById("payMsg");
     if (!pendingRSVP) {
-      if (el) el.textContent = "Missing RSVP info — go back and try again.";
+      setPlainMessage("payMsg", "Missing RSVP info — go back and try again.");
       return;
     }
 
     setPayButtonsDisabled_(true);
-    if (el) el.textContent = "Saving your spot… 💞";
+    setBusyMessage("payMsg", "Saving your spot… please wait 💞");
 
     try {
       const data = await postRSVP({
@@ -617,7 +753,7 @@
       });
 
       if (!data.ok) {
-        if (el) el.textContent = data.error || "Something went wrong 💔";
+        setPlainMessage("payMsg", data.error || "Something went wrong 💔");
         return;
       }
 
@@ -655,12 +791,12 @@
   async function payNowStripe_() {
     const el = document.getElementById("payMsg");
     if (!pendingRSVP) {
-      if (el) el.textContent = "Missing RSVP info — go back and try again.";
+      setPlainMessage("payMsg", "Missing RSVP info — go back and try again.");
       return;
     }
 
     setPayButtonsDisabled_(true);
-    if (el) el.textContent = "Holding your spot… then sending you to checkout 💞";
+    setBusyMessage("payMsg", "Holding your spot… sending you to Stripe 💳💞");
 
     try {
       // Reuse existing hold if we already created one
@@ -675,13 +811,13 @@
         });
 
         if (!data.ok) {
-          if (el) el.textContent = data.error || "Something went wrong 💔";
+          setPlainMessage("payMsg", data.error || "Something went wrong 💔");
           return;
         }
 
         rsvpId = data.rsvpId;
         if (!rsvpId) {
-          if (el) el.textContent = "Missing RSVP id from server 💔";
+          setPlainMessage("payMsg", "Missing RSVP id from server 💔");
           return;
         }
 
@@ -701,7 +837,7 @@
 
       const out = await r.json().catch(() => ({}));
       if (!out?.url) {
-        if (el) el.textContent = out?.error || "Couldn’t start checkout 💔";
+        setPlainMessage("payMsg", out?.error || "Couldn’t start checkout 💔");
         return;
       }
 
@@ -710,7 +846,7 @@
 if (window.top) window.top.location.href = out.url;
 else window.location.href = out.url;
     } catch (err) {
-      if (el) el.textContent = "Checkout failed 😭 Try again.";
+      setPlainMessage("payMsg", "Checkout failed 😭 Try again.");
     } finally {
       setPayButtonsDisabled_(false);
     }
