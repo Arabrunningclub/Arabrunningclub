@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import PilatesClient from "./PilatesClient";
 
 export const metadata: Metadata = {
@@ -30,5 +31,9 @@ export const metadata: Metadata = {
 };
 
 export default function PilatesPage() {
-  return <PilatesClient />;
+  return (
+    <Suspense fallback={null}>
+      <PilatesClient />
+    </Suspense>
+  );
 }
