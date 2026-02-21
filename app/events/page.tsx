@@ -14,7 +14,9 @@ type EventSlot = {
   href: string;
   badge?: string;
   cost?: string;
-  images?: string[]; // NEW
+  images?: string[];
+  /** ISO date-time with timezone offset, used for filtering/sorting */
+  startAt: string;
 };
 
 const EVENTS: EventSlot[] = [
@@ -23,6 +25,7 @@ const EVENTS: EventSlot[] = [
     title: "Galentine’s Pilates @ Wayne State",
     dateLabel: "Wed • Feb 11, 2026",
     timeLabel: "11:30 AM – 12:30 PM • 1:00 PM – 2:00 PM",
+    startAt: "2026-02-11T11:30:00-05:00",
     location: "Student Center • Dance Room 020",
     cost: "$15",
     images: [
@@ -30,7 +33,6 @@ const EVENTS: EventSlot[] = [
       "/images/pilates-2.jpg",
       "/images/pilates-3.jpg",
       "/images/pilates-4.jpg",
-     
     ],
     description:
       "Beginner-friendly premium pilates experience. Drinks + snacks included. RSVP so we can plan mats, spacing, and the overall setup.",
@@ -38,7 +40,6 @@ const EVENTS: EventSlot[] = [
     badge: "Open",
   },
 ];
-
 
 function EventSlotCard({ event }: { event: EventSlot }) {
   return (
@@ -53,34 +54,33 @@ function EventSlotCard({ event }: { event: EventSlot }) {
           "group block h-full rounded-2xl p-5",
           "border border-black/10 dark:border-white/10",
           "shadow-sm hover:shadow-lg transition-shadow",
-          "bg-pink-500 text-white", // <- pink slot
+          "bg-pink-500 text-white",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80",
         ].join(" ")}
         aria-label={`Open event: ${event.title}`}
       >
         <div className="flex items-start justify-between gap-3">
-  <div>
-    <h3 className="text-xl font-bold leading-snug">{event.title}</h3>
-    <p className="mt-1 text-sm text-white/90">{event.dateLabel}</p>
-    <p className="text-sm text-white/90">{event.timeLabel}</p>
-    <p className="mt-2 text-sm text-white/90">{event.location}</p>
-  </div>
+          <div>
+            <h3 className="text-xl font-bold leading-snug">{event.title}</h3>
+            <p className="mt-1 text-sm text-white/90">{event.dateLabel}</p>
+            <p className="text-sm text-white/90">{event.timeLabel}</p>
+            <p className="mt-2 text-sm text-white/90">{event.location}</p>
+          </div>
 
-  <div className="shrink-0 text-right">
-    {event.badge ? (
-      <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
-        {event.badge}
-      </span>
-    ) : null}
+          <div className="shrink-0 text-right">
+            {event.badge ? (
+              <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+                {event.badge}
+              </span>
+            ) : null}
 
-    {event.cost ? (
-      <div className="mt-2 text-xl font-semibold leading-tight">
-        {event.cost}
-      </div>
-    ) : null}
-  </div>
-</div>
-
+            {event.cost ? (
+              <div className="mt-2 text-xl font-semibold leading-tight">
+                {event.cost}
+              </div>
+            ) : null}
+          </div>
+        </div>
 
         {/* Expands on hover (and keyboard focus) */}
         <div
@@ -103,6 +103,7 @@ function EventSlotCard({ event }: { event: EventSlot }) {
     </motion.div>
   );
 }
+
 function ImageRail({ images = [] }: { images?: string[] }) {
   if (!images.length) return null;
 
@@ -130,6 +131,16 @@ function ImageRail({ images = [] }: { images?: string[] }) {
 }
 
 export default function Events() {
+  const now = new Date();
+
+  // Hide past events automatically + sort soonest first
+  const upcoming = EVENTS
+    .filter((e) => {
+      const start = new Date(e.startAt);
+      return Number.isFinite(start.getTime()) && start >= now;
+    })
+    .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
+
   return (
     <Layout>
       <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
@@ -158,25 +169,24 @@ export default function Events() {
 
         <section className="pb-20">
           <div className="container mx-auto px-4">
-            {EVENTS.length === 0 ? (
+            {upcoming.length === 0 ? (
               <div className="mx-auto max-w-2xl rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
-                <p className="text-lg font-semibold">No events posted yet.</p>
+                <p className="text-lg font-semibold">No upcoming events.</p>
                 <p className="mt-2 opacity-75">
                   Check back soon. New slots will appear here.
                 </p>
               </div>
             ) : (
               <div className="grid gap-10 lg:grid-cols-[520px_1fr] items-start">
-  <div className="grid gap-4">
-    {EVENTS.map((e) => (
-      <EventSlotCard key={e.id} event={e} />
-    ))}
-  </div>
+                <div className="grid gap-4">
+                  {upcoming.map((e) => (
+                    <EventSlotCard key={e.id} event={e} />
+                  ))}
+                </div>
 
-  {/* Right-side image wall uses the first event for now */}
-  <ImageRail images={EVENTS[0]?.images} />
-</div>
-
+                {/* Right-side image wall uses the next upcoming event */}
+                <ImageRail images={upcoming[0]?.images} />
+              </div>
             )}
           </div>
         </section>
