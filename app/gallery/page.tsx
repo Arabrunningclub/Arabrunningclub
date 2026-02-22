@@ -25,7 +25,7 @@ const GALLERY: GalleryEvent[] = [
     dateISO: "2026-02-21",
     cover: "/images/pilates-1.jpeg",
     images: [
-      "/images/pilates-1.jpeg",
+      "/images/pilates-1.jpg",
       "/images/pilates-2.jpg",
       "/images/pilates-3.jpg",
       "/images/pilates-4.jpg",
@@ -275,9 +275,9 @@ export default function GalleryPage() {
               <div>
                 <h1 className="text-4xl md:text-6xl font-bold">ARC Gallery</h1>
                 <p className="mt-3 text-lg md:text-2xl opacity-90 max-w-3xl">
-                  Recaps from every event — community, moments, and proof we’re real.
+                  Recaps from every event
                 </p>
-                <p className="mt-3 text-sm opacity-70">
+                <p className="mt-3 text-bg opacity-70">
                   Want to be featured? Tag{" "}
                   <Link
                     href="https://www.instagram.com/arabrec.club/"

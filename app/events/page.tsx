@@ -39,7 +39,7 @@ const EVENTS: EventSlot[] = [
     cost: "$15",
     images: [
       // IMPORTANT: must match EXACT filenames in /public/images (case + extension)
-      "/images/pilates-1.jpeg",
+      "/images/pilates-1.jpg",
       "/images/pilates-2.jpg",
       "/images/pilates-3.jpg",
       "/images/pilates-4.jpg",
@@ -380,9 +380,9 @@ export default function EventsPage() {
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-6xl font-bold">Events</h1>
             <p className="mt-3 text-lg md:text-2xl opacity-90">
-              Upcoming events first — past events stay for galleries + credibility.
+              Find our latest events here
             </p>
-            <p className="mt-3 text-sm opacity-70">
+            <p className="mt-3 text-bg opacity-70">
               Don’t see an event yet? Follow{" "}
               <Link
                 href="https://www.instagram.com/arabrec.club/"
