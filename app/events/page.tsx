@@ -17,6 +17,7 @@ type EventSlot = {
   images?: string[];
   /** ISO date-time with timezone offset, used for filtering/sorting */
   startAt: string;
+  endAt: string;   // ✅ NEW: ISO end time
 };
 
 const EVENTS: EventSlot[] = [
@@ -26,6 +27,7 @@ const EVENTS: EventSlot[] = [
     dateLabel: "Wed • Feb 21, 2026",
     timeLabel: "11:30 AM – 12:30 PM • 1:00 PM – 2:00 PM",
     startAt: "2026-02-21T11:30:00-05:00",
+      endAt: "2026-02-21T14:00:00-05:00",
     location: "Student Center • Dance Room 020",
     cost: "$15",
     images: [
@@ -39,7 +41,47 @@ const EVENTS: EventSlot[] = [
     href: "/pilates",
     badge: "Open",
   },
+  // Add more events here as needed
 ];
+
+function ImageRail({ images = [] }: { images?: string[] }) {
+  if (!images.length) return null;
+
+  return (
+    <aside className="hidden lg:block">
+      <div className="sticky top-24">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+          {/* Slideshow-ready frame */}
+          <div className="relative overflow-hidden rounded-2xl">
+            <img
+              src={images[0]}
+              alt=""
+              className="h-[520px] w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+
+          {/* Thumbnail strip (still separate from cards) */}
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {images.slice(0, 8).map((src, i) => (
+              <div
+                key={`${src}-${i}`}
+                className="overflow-hidden rounded-xl border border-white/10 bg-white/5"
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="h-20 w-full object-cover transition-transform duration-300 hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
 
 function EventSlotCard({ event }: { event: EventSlot }) {
   return (
@@ -104,42 +146,18 @@ function EventSlotCard({ event }: { event: EventSlot }) {
   );
 }
 
-function ImageRail({ images = [] }: { images?: string[] }) {
-  if (!images.length) return null;
-
-  return (
-    <aside className="hidden lg:block">
-      <div className="sticky top-24">
-        <div className="grid grid-cols-2 gap-3">
-          {images.map((src, i) => (
-            <div
-              key={`${src}-${i}`}
-              className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
-            >
-              <img
-                src={src}
-                alt=""
-                className="h-36 w-full object-cover transition-transform duration-300 hover:scale-105"
-                loading="lazy"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </aside>
-  );
-}
+/* (duplicate ImageRail removed) */
 
 export default function Events() {
   const now = new Date();
 
   // Hide past events automatically + sort soonest first
-  const upcoming = EVENTS
-    .filter((e) => {
-      const start = new Date(e.startAt);
-      return Number.isFinite(start.getTime()) && start >= now;
-    })
-    .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
+const upcoming = EVENTS
+  .filter((e) => {
+    const end = new Date(e.endAt);
+    return Number.isFinite(end.getTime()) && end >= now; // ✅ stays until event ends
+  })
+  .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
 
   return (
     <Layout>
