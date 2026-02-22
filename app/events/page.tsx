@@ -313,14 +313,6 @@ function EventCard({
             </Link>
           )}
 
-          <span
-            className={classNames(
-              "inline-flex items-center rounded-full px-3 py-2 text-xs border opacity-80",
-              selected ? "border-black/30 dark:border-white/30" : "border-black/10 dark:border-white/10"
-            )}
-          >
-            Click card to preview gallery
-          </span>
         </div>
       </button>
     </motion.div>

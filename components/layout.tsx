@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
 import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -123,36 +123,64 @@ export default function Layout({
           </div>
         </nav>
 
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="md:hidden bg-white dark:bg-[#292929] shadow-md"
-          >
-            {navItems.map((item) =>
-              item.external ? (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block py-2 px-4 text-[#292929] dark:text-white hover:bg-[#292929]/10 transition-colors"
-                >
-                  {item.name}
-                </a>
-              ) : (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="block py-2 px-4 text-[#292929] dark:text-white hover:bg-[#292929]/10 transition-colors"
-                >
-                  {item.name}
-                </Link>
-              )
-            )}
-          </motion.div>
+        <AnimatePresence>
+  {isMenuOpen && (
+    <>
+      {/* click-away overlay */}
+      <motion.button
+        type="button"
+        className="fixed inset-0 z-[40] cursor-default bg-black/5 dark:bg-black/25 md:hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setIsMenuOpen(false)}
+        aria-hidden
+      />
+
+      {/* glass dropdown panel (Gallery-style) */}
+      <motion.div
+        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+        className={[
+          "md:hidden",
+          "fixed left-3 right-3 top-20 z-[50]",          // sits right under your fixed header (h-20)
+          "overflow-hidden rounded-2xl",
+          "border border-black/10 dark:border-white/10",
+          "bg-white/80 dark:bg-black/55 backdrop-blur",
+          "shadow-xl",
+        ].join(" ")}
+        role="navigation"
+        aria-label="Mobile navigation"
+      >
+        {navItems.map((item) =>
+          item.external ? (
+            <a
+              key={item.name}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsMenuOpen(false)}
+              className="block px-6 py-4 text-lg text-[#292929] dark:text-white transition hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              {item.name}
+            </a>
+          ) : (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={() => setIsMenuOpen(false)}
+              className="block px-6 py-4 text-lg text-[#292929] dark:text-white transition hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              {item.name}
+            </Link>
+          )
         )}
+      </motion.div>
+    </>
+  )}
+</AnimatePresence>
       </header>
 
       <main
