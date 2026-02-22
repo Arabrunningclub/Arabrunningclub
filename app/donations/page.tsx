@@ -34,7 +34,7 @@ function DonationsClient() {
     }
     try {
       setBusy(true);
-      const res = await fetch('/api/checkout', {
+      const res = await fetch('/api/donations/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount }),

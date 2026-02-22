@@ -23,9 +23,9 @@ const EVENTS: EventSlot[] = [
   {
     id: "pilates",
     title: "Galentine’s Pilates @ Wayne State",
-    dateLabel: "Wed • Feb 11, 2026",
+    dateLabel: "Wed • Feb 21, 2026",
     timeLabel: "11:30 AM – 12:30 PM • 1:00 PM – 2:00 PM",
-    startAt: "2026-02-11T11:30:00-05:00",
+    startAt: "2026-02-21T11:30:00-05:00",
     location: "Student Center • Dance Room 020",
     cost: "$15",
     images: [
