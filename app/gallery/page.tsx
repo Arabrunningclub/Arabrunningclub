@@ -9,8 +9,9 @@ type GalleryEvent = {
   id: string;
   title: string;
   dateLabel: string;
+  dateISO: string; // 
   cover?: string;
-  images: string[]; // put /images/... paths here
+  images: string[];
 };
 
 const ARAB_WORLD_SVG =
@@ -23,6 +24,7 @@ const GALLERY: GalleryEvent[] = [
     id: "galentines-pilates-2026",
     title: "Galentine’s Pilates @ Wayne State",
     dateLabel: "Feb 21, 2026",
+    dateISO: "2026-02-21", 
     cover: "/images/pilates-1.jpeg",
     images: [
       "/images/pilates-1.jpg",
@@ -39,6 +41,7 @@ const GALLERY: GalleryEvent[] = [
     id: "ice-skating-2026",
     title: "Arabs On Ice",
     dateLabel: "Jan 10, 2026",
+    dateISO: "2026-01-10",
     cover: "/images/iceskating1.JPG",
     images: [
       "/images/iceskating.jpg",
@@ -99,7 +102,12 @@ export default function GalleryPage() {
   const [activeEvent, setActiveEvent] = useState<string>("all");
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
-  const all = useMemo(() => flattenGallery(GALLERY), []);
+  const all = useMemo(() => {
+  const sorted = [...GALLERY].sort(
+    (a, b) => +new Date(b.dateISO) - +new Date(a.dateISO)
+  );
+  return flattenGallery(sorted);
+}, []);
   const filtered = useMemo(() => {
     if (activeEvent === "all") return all;
     return all.filter((x) => x.eventId === activeEvent);
@@ -169,7 +177,7 @@ export default function GalleryPage() {
           <motion.img
             src={ARAB_WORLD_SVG}
             alt=""
-            className="absolute -right-24 top-10 w-[900px] max-w-none opacity-[0.06] dark:opacity-[0.07] blur-[0.3px]"
+            className="absolute right-[-140px] top-[-40px] w-[1100px] max-w-none opacity-[0.10] dark:opacity-[0.12] blur-[0.2px]"
             initial={{ y: 0, x: 0, rotate: 0 }}
             animate={{ y: [0, -10, 0], x: [0, 8, 0], rotate: [0, 0.6, 0] }}
             transition={{ duration: 18, ease: "easeInOut", repeat: Infinity }}
@@ -180,7 +188,7 @@ export default function GalleryPage() {
         </div>
 
         {/* Header */}
-        <section className="relative py-14 md:py-18">
+        <section className="relative pt-24 md:pt-28 pb-14">
           <div className="container mx-auto px-4">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
@@ -206,16 +214,19 @@ export default function GalleryPage() {
               <div className="flex items-center gap-2">
                 <span className="text-sm opacity-70">Filter:</span>
                 <select
-                  value={activeEvent}
-                  onChange={(e) => setActiveEvent(e.target.value)}
-                  className="rounded-xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur px-3 py-2 text-sm outline-none"
-                >
-                  <option value="all">All events</option>
-                  {GALLERY.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.title}
-                    </option>
-                  ))}
+  value={activeEvent}
+  onChange={(e) => setActiveEvent(e.target.value)}
+  className="rounded-full border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/10 backdrop-blur px-4 py-2 text-sm font-semibold outline-none shadow-sm
+             hover:bg-white/70 dark:hover:bg-white/15 transition"
+>                
+                  <option value="all" className="bg-black text-white">
+  All events
+</option>
+{GALLERY.map((e) => (
+  <option key={e.id} value={e.id} className="bg-black text-white">
+    {e.title}
+  </option>
+))}
                 </select>
               </div>
             </div>
