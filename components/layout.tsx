@@ -13,7 +13,7 @@ const navItems = [
   { name: "Charity", href: "/charity" },
   { name: "Donations", href: "/donations" },
   { name: "Shop", href: "https://shop.wakingup.com/products/work-in-progress-t-shirt?srsltid=AfmBOop1KjQPbEB77g-M3F8egLSPn3CRJ0jgyAkB-xxJk2-8qkjRm0-l&variant=44256900415735", external: true },
-  { name: "Contact", href: "/" },
+  { name: "Gallery", href: "/gallery" },
 ]
 
 function getInitialTheme() {
@@ -165,7 +165,7 @@ export default function Layout({
       </main>
 {!transparent && (
   <footer className="bg-background text-foreground py-6 text-center">
-    © {new Date().getFullYear()} Arab Running Club. All rights reserved.
+    © {new Date().getFullYear()} Arab Recreational Club. All rights reserved.
   </footer>
 )}
     </div>

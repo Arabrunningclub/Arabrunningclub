@@ -40,9 +40,13 @@ const EVENTS: EventSlot[] = [
     cost: "$15",
     images: [
       "/images/pilates-1.jpg",
-      "/images/pilates-2.jpg",
-      "/images/pilates-3.jpg",
-      "/images/pilates-4.jpg",
+  "/images/pilates-2.jpg",
+  "/images/pilates-3.jpg",
+  "/images/pilates-4.jpg",
+  "/images/pilates-5.jpg",
+  "/images/pilates-6.jpg",
+  "/images/pilates-7.jpg",
+  "/images/pilates-8.jpg",
     ],
     description:
       "Beginner-friendly premium pilates experience. Drinks + snacks included. RSVP so we can plan mats, spacing, and the overall setup.",
@@ -54,28 +58,32 @@ const EVENTS: EventSlot[] = [
 
   // Example past event (so you can see the Past section immediately)
   {
-    id: "sunset-run",
-    title: "Sunset Run + Social",
+    id: "ArabsOn Ice",
+    title: "Arabs on Ice",
     dateLabel: "Sat • Jan 10, 2026",
     timeLabel: "5:30 PM – 7:30 PM",
     startAt: "2026-01-10T17:30:00-05:00",
     endAt: "2026-01-10T19:30:00-05:00",
-    location: "Hines Drive • Meet at the lot",
+    location: "Detroit • Meet at the rink",
     cost: "Free",
-    images: ["/images/pilates-2.jpg", "/images/pilates-3.jpg", "/images/pilates-1.jpg"],
+    images: ["/images/iceskating.jpg", "/images/iceskating1.jpg", "/images/iceskating3.jpg", "/images/iceskating4.jpg"],
     description:
       "Chill run at golden hour, then food + hanging out. Great turnout and good energy.",
     href: "/events", // not used for past
-    galleryHref: "/events/sunset-run-recap",
+    galleryHref: "/gallery",
     badge: "Passed",
   },
 ];
 
 const FALLBACK_IMAGES = [
-  "/images/pilates-1.jpg",
-  "/images/pilates-2.jpg",
-  "/images/pilates-3.jpg",
+  "/images/iceskating.jpg",
+  "/images/iceskating1.jpg",
+  "/images/iceskating3.jpg",
   "/images/pilates-4.jpg",
+  "/images/pilates-5.jpg",
+  "/images/pilates-6.jpg",
+  "/images/pilates-7.jpg",
+  "/images/pilates-8.jpg",
 ];
 
 function parseISO(s: string) {
@@ -322,7 +330,7 @@ function EventCard({
               "opacity-80"
             )}
           >
-            Click card to preview gallery
+            -
           </span>
         </div>
       </button>

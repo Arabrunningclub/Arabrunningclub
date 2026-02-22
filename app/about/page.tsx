@@ -12,7 +12,7 @@ export default function About() {
         <title>ARC - About</title>
         <meta
           name="description"
-          content="Learn more about the mission and vision of the Arab Running Club."
+          content="Learn more about the mission and vision of the Arab Recreational Club."
         />
       </Head>
       <Layout>
@@ -37,10 +37,10 @@ export default function About() {
                 <div className="bg-white dark:bg-black rounded-lg shadow-lg p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="text-center">
                     <h2 className="text-2xl font-bold mb-4">
-                      Welcome to Arab Running Club
+                      Welcome to Arab Recreational Club
                     </h2>
                     <p className="text-lg opacity-80">
-                      Welcome to Arab Running Club. Our aim is simple: to unite
+                      Welcome to Arab Recreational Club. Our aim is simple: to unite
                       and empower Arabs across the Detroit metropolitan area
                       through recreational and social events.
                     </p>
@@ -70,17 +70,16 @@ export default function About() {
                       We are not just about fitness; we are about forging a
                       unified Arab identity. Too often, division has been used
                       to weaken our community, separating us instead of bringing
-                      us together. Arab Running Club is dedicated to creating an
+                      us together. Arab Rec Club is dedicated to creating an
                       inclusive environment where Arabs from all walks of life
-                      can come together, share experiences, and grow as one
-                      unified community.
+                      can come together, share experiences, and have fun.
                     </p>
 
                     <h2 className="text-2xl font-bold mt-8 mb-4">
                       Join the Movement
                     </h2>
                     <p className="text-lg opacity-80">
-                      Arab Running Club is more than just a running group—we hold all sports events and activities to promote
+                      Arab Rec Club is more than just a fitness group, we hold all sports events and activities to promote
                       fitness and well-being. Together, we stay active, stay connected, and
                       stay inspired. Whether you're a seasoned runner or just
                       starting out, there's a place for you here.
