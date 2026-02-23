@@ -38,7 +38,6 @@ const EVENTS: EventSlot[] = [
     location: "Student Center • Dance Room 020",
     cost: "$15",
     images: [
-      // IMPORTANT: must match EXACT filenames in /public/images (case + extension)
       "/images/pilates-1.jpg",
       "/images/pilates-2.jpg",
       "/images/pilates-3.jpg",
@@ -90,6 +89,149 @@ function classNames(...xs: Array<string | false | null | undefined>) {
 function parseISO(s: string) {
   const d = new Date(s);
   return Number.isFinite(d.getTime()) ? d : null;
+}
+
+type AmbientParticle = {
+  id: number;
+  left: string;
+  top: string;
+  size: number;
+  blur: number;
+  opacity: number;
+  duration: number;
+  delay: number;
+  driftX: number;
+  driftY: number;
+  color: "gray" | "red";
+};
+
+function AmbientAtmosphere() {
+  const particles = useMemo<AmbientParticle[]>(() => {
+    // deterministic-ish spread (no flicker across renders)
+    return Array.from({ length: 24 }, (_, i) => {
+      const t = i + 1;
+      const gray = i % 3 !== 0;
+      return {
+        id: i,
+        left: `${(t * 37) % 100}%`,
+        top: `${8 + ((t * 19) % 78)}%`,
+        size: 2 + ((t * 7) % 7), // 2..8px
+        blur: i % 4 === 0 ? 2 : i % 4 === 1 ? 4 : 6,
+        opacity: gray ? 0.16 + (i % 5) * 0.03 : 0.12 + (i % 4) * 0.03,
+        duration: 11 + (i % 7) * 2.4,
+        delay: (i % 5) * 0.7,
+        driftX: -14 + ((t * 11) % 28), // -14..14
+        driftY: -10 + ((t * 13) % 20), // -10..10
+        color: gray ? "gray" : "red",
+      };
+    });
+  }, []);
+
+  return (
+    <>
+      {/* Base ambient layer across page */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {/* soft top diffusion / PS5-like calm glow */}
+        <motion.div
+          aria-hidden
+         className="absolute inset-[-20%] blur-3xl"
+          style={{
+            background: `
+              radial-gradient(55% 80% at 50% 0%, rgba(189,196,207,0.5) 0%, rgba(189,196,207,0.12) 34%, rgba(189,196,207,0.04) 58%, rgba(0,0,0,0) 78%),
+              radial-gradient(42% 68% at 74% 4%, rgba(134,56,56,1) 0%, rgba(134,56,56,0.10) 36%, rgba(134,56,56,0.03) 60%, rgba(0,0,0,0) 80%),
+              radial-gradient(36% 56% at 22% 10%, rgba(128,132,138,0.16) 0%, rgba(128,132,138,0.08) 40%, rgba(0,0,0,0) 76%)
+            `,
+            
+          }}
+          animate={{
+            opacity: [0.82, 1, 0.9, 0.98, 0.82],
+            scale: [1, 1.015, 1.01, 1.02, 1],
+          }}
+          transition={{
+            duration: 14,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* subtle top beam / strip diffusion */}
+        <motion.div
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-28 md:h-36 blur-2xl"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(192,198,210,0.14) 0%, rgba(142,70,70,0.10) 35%, rgba(0,0,0,0) 100%)",
+          }}
+          animate={{ opacity: [0.65, 0.85, 0.7, 0.65] }}
+          transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* very faint lower-page color continuity so it feels integrated while scrolling */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-[16rem] bottom-0 opacity-50 blur-3xl"
+          style={{
+            background: `
+              radial-gradient(35% 30% at 18% 30%, rgba(120,120,120,0.08), rgba(0,0,0,0) 70%),
+              radial-gradient(32% 26% at 80% 42%, rgba(130,52,52,0.08), rgba(0,0,0,0) 72%)
+            `,
+          }}
+        />
+
+        {/* floating particles */}
+        <div className="absolute inset-0">
+          {particles.map((p) => {
+            const baseColor =
+              p.color === "gray"
+                ? "rgba(202,208,214,0.9)"
+                : "rgba(142,74,74,0.9)"; // muted/matte red
+
+            return (
+              <motion.span
+                key={p.id}
+                aria-hidden
+                className="absolute rounded-full"
+                style={{
+                  left: p.left,
+                  top: p.top,
+                  width: p.size,
+                  height: p.size,
+                  opacity: p.opacity,
+                  filter: `blur(${p.blur}px)`,
+                  background: baseColor,
+                  boxShadow:
+                    p.color === "gray"
+                      ? "0 0 18px rgba(200,205,212,0.18)"
+                      : "0 0 18px rgba(145,72,72,0.14)",
+                }}
+                animate={{
+                  x: [0, p.driftX, p.driftX * 0.45, 0],
+                  y: [0, p.driftY, p.driftY * -0.35, 0],
+                  opacity: [
+                    p.opacity * 0.7,
+                    p.opacity,
+                    p.opacity * 0.75,
+                    p.opacity * 0.9,
+                    p.opacity * 0.7,
+                  ],
+                  scale: [1, 1.2, 0.95, 1.05, 1],
+                }}
+                transition={{
+                  duration: p.duration,
+                  delay: p.delay,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* ultra subtle vignette to keep focus on content */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 dark:to-black/20" />
+      </div>
+    </>
+  );
 }
 
 function FloatingInstagram() {
@@ -312,7 +454,6 @@ function EventCard({
               View full gallery
             </Link>
           )}
-
         </div>
       </button>
     </motion.div>
@@ -366,131 +507,135 @@ export default function EventsPage() {
     <Layout>
       <FloatingInstagram />
 
-      <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
-        {/* extra top padding so navbar doesn’t cut the title */}
-        <section className="pt-24 md:pt-28 pb-10">
-          <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-6xl font-bold">Events</h1>
-            <p className="mt-3 text-lg md:text-2xl opacity-90">
-              Find our latest events here
-            </p>
-            <p className="mt-3 text-bg opacity-70">
-              Don’t see an event yet? Follow{" "}
-              <Link
-                href="https://www.instagram.com/arabrec.club/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold underline"
-              >
-                Instagram
-              </Link>{" "}
-              for updates.
-            </p>
-          </div>
-        </section>
+      <main className="relative isolate min-h-screen overflow-x-clip bg-white text-black dark:bg-black dark:text-white transition-colors">
+        <AmbientAtmosphere />
 
-        <section className="pb-20">
-          <div className="container mx-auto px-4">
-            {/* Responsive: slideshow visible on split-screen (right column on md+) */}
-            <div className="grid gap-10 md:grid-cols-[1fr_420px] lg:grid-cols-[1fr_520px] items-start">
-              <div className="md:order-2">
-                <div className="md:sticky md:top-24">
-                  <Slideshow images={galleryImages} title={selectedEvent?.title ?? "Gallery"} />
+        {/* content wrapper stays above ambience */}
+        <div className="relative z-10">
+          {/* extra top padding so navbar doesn’t cut the title */}
+          <section className="pt-24 md:pt-28 pb-10">
+            <div className="container mx-auto px-4">
+              <h1 className="text-4xl md:text-6xl font-bold">Events</h1>
+              <p className="mt-3 text-lg md:text-2xl opacity-90">
+                Find our latest events here
+              </p>
+              <p className="mt-3 text-bg opacity-70">
+                Don’t see an event yet? Follow{" "}
+                <Link
+                  href="https://www.instagram.com/arabrec.club/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline"
+                >
+                  Instagram
+                </Link>{" "}
+                for updates.
+              </p>
+            </div>
+          </section>
+
+          <section className="pb-20">
+            <div className="container mx-auto px-4">
+              <div className="grid gap-10 md:grid-cols-[1fr_420px] lg:grid-cols-[1fr_520px] items-start">
+                <div className="md:order-2">
+                  <div className="md:sticky md:top-24">
+                    <Slideshow images={galleryImages} title={selectedEvent?.title ?? "Gallery"} />
+                  </div>
                 </div>
-              </div>
 
-              <div className="md:order-1">
-                {/* Upcoming */}
-                <div className="mb-10">
+                <div className="md:order-1">
+                  {/* Upcoming */}
+                  <div className="mb-10">
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                      <h2 className="text-2xl font-bold">Upcoming</h2>
+                      <span className="text-sm opacity-70">
+                        {upcomingEvents.length} {upcomingEvents.length === 1 ? "event" : "events"}
+                      </span>
+                    </div>
+
+                    {upcomingEvents.length === 0 ? (
+                      <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
+                        <p className="text-lg font-semibold">No upcoming events.</p>
+                        <p className="mt-2 opacity-75">Check back soon — new slots will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {upcomingEvents.map((e) => (
+                          <EventCard
+                            key={e.id}
+                            event={e}
+                            isPast={false}
+                            selected={selectedId === e.id}
+                            onSelect={() => setSelectedId(e.id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Past (arrow toggle + collapse animation) */}
                   <div className="flex items-center justify-between gap-4 mb-4">
-                    <h2 className="text-2xl font-bold">Upcoming</h2>
+                    <button
+                      type="button"
+                      onClick={() => setPastOpen((v) => !v)}
+                      className="group inline-flex items-center gap-2"
+                      aria-expanded={pastOpen}
+                      aria-controls="past-events"
+                    >
+                      <h2 className="text-2xl font-bold">Past</h2>
+
+                      <motion.span
+                        animate={{ rotate: pastOpen ? 90 : 0 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-black/10 dark:border-white/10
+                                   opacity-80 group-hover:opacity-100 transition"
+                        title={pastOpen ? "Collapse past events" : "Expand past events"}
+                      >
+                        <span className="text-sm">›</span>
+                      </motion.span>
+                    </button>
+
                     <span className="text-sm opacity-70">
-                      {upcomingEvents.length} {upcomingEvents.length === 1 ? "event" : "events"}
+                      {pastEvents.length} {pastEvents.length === 1 ? "event" : "events"}
                     </span>
                   </div>
 
-                  {upcomingEvents.length === 0 ? (
-                    <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
-                      <p className="text-lg font-semibold">No upcoming events.</p>
-                      <p className="mt-2 opacity-75">Check back soon — new slots will appear here.</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {upcomingEvents.map((e) => (
-                        <EventCard
-                          key={e.id}
-                          event={e}
-                          isPast={false}
-                          selected={selectedId === e.id}
-                          onSelect={() => setSelectedId(e.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {pastOpen && (
+                      <motion.div
+                        id="past-events"
+                        key="past-events"
+                        initial={{ height: 0, opacity: 0, y: -10 }}
+                        animate={{ height: "auto", opacity: 1, y: 0 }}
+                        exit={{ height: 0, opacity: 0, y: -10 }}
+                        transition={{ duration: 0.28, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        {pastEvents.length === 0 ? (
+                          <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
+                            <p className="opacity-75">No past events listed yet.</p>
+                          </div>
+                        ) : (
+                          <div className="grid gap-4">
+                            {pastEvents.map((e) => (
+                              <EventCard
+                                key={e.id}
+                                event={e}
+                                isPast={true}
+                                selected={selectedId === e.id}
+                                onSelect={() => setSelectedId(e.id)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-
-                {/* Past (arrow toggle + collapse animation) */}
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setPastOpen((v) => !v)}
-                    className="group inline-flex items-center gap-2"
-                    aria-expanded={pastOpen}
-                    aria-controls="past-events"
-                  >
-                    <h2 className="text-2xl font-bold">Past</h2>
-
-                    <motion.span
-                      animate={{ rotate: pastOpen ? 90 : 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-black/10 dark:border-white/10
-                                 opacity-80 group-hover:opacity-100 transition"
-                      title={pastOpen ? "Collapse past events" : "Expand past events"}
-                    >
-                      <span className="text-sm">›</span>
-                    </motion.span>
-                  </button>
-
-                  <span className="text-sm opacity-70">
-                    {pastEvents.length} {pastEvents.length === 1 ? "event" : "events"}
-                  </span>
-                </div>
-
-                <AnimatePresence initial={false}>
-                  {pastOpen && (
-                    <motion.div
-                      id="past-events"
-                      key="past-events"
-                      initial={{ height: 0, opacity: 0, y: -10 }}
-                      animate={{ height: "auto", opacity: 1, y: 0 }}
-                      exit={{ height: 0, opacity: 0, y: -10 }}
-                      transition={{ duration: 0.28, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      {pastEvents.length === 0 ? (
-                        <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
-                          <p className="opacity-75">No past events listed yet.</p>
-                        </div>
-                      ) : (
-                        <div className="grid gap-4">
-                          {pastEvents.map((e) => (
-                            <EventCard
-                              key={e.id}
-                              event={e}
-                              isPast={true}
-                              selected={selectedId === e.id}
-                              onSelect={() => setSelectedId(e.id)}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
     </Layout>
   );
