@@ -11,6 +11,7 @@ type EventSlot = {
   dateLabel: string;
   timeLabel: string;
   location: string;
+  mapUrl?: string;
   description: string;
 
   // For upcoming events
@@ -52,6 +53,7 @@ const EVENTS: EventSlot[] = [
     href: "/pilates",
     badge: "Open",
     galleryId: "galentines-pilates-2026",
+    
   },
   {
     id: "ice",
@@ -73,6 +75,34 @@ const EVENTS: EventSlot[] = [
     badge: "Passed",
     galleryId: "ice-skating-2026",
   },
+  {
+  id: "pickleball",
+  title: "ARC Pickleball Meetup",
+  dateLabel: "Fri • June 5, 2026",
+  timeLabel: "6:00 PM – 9:00 PM",
+  startAt: "2026-06-05T18:00:00-04:00",
+  endAt: "2026-06-05T21:00:00-04:00",
+
+  location: "Crowley Park",
+  mapUrl:
+    "https://maps.app.goo.gl/EUS3xE7742taSz8u7",
+
+  cost: "Free",
+
+  images: [
+    "/images/OUtenniscourts.jpg",
+    "/images/Pickleball.png",
+  ],
+
+  description:
+    "Join ARC for an evening of pickleball, movement, and community. All skill levels are welcome.",
+
+  href: "/pickleball",
+
+  badge: "Open",
+
+  galleryId: "june-pickleball-2026",
+},
 ];
 
 const FALLBACK_IMAGES = [
@@ -102,138 +132,131 @@ type AmbientParticle = {
   delay: number;
   driftX: number;
   driftY: number;
-  color: "gray" | "red";
+  color: "gray" | "red" | "green";
 };
 
 function AmbientAtmosphere() {
   const particles = useMemo<AmbientParticle[]>(() => {
-    // deterministic-ish spread (no flicker across renders)
-    return Array.from({ length: 24 }, (_, i) => {
+    return Array.from({ length: 30 }, (_, i) => {
       const t = i + 1;
-      const gray = i % 3 !== 0;
+
+      let color: AmbientParticle["color"] = "gray";
+      if (i % 4 === 0) color = "green";
+      else if (i % 7 === 0) color = "red";
+
       return {
         id: i,
         left: `${(t * 37) % 100}%`,
-        top: `${8 + ((t * 19) % 78)}%`,
-        size: 2 + ((t * 7) % 7), // 2..8px
+        top: `${6 + ((t * 19) % 88)}%`,
+        size: 2 + ((t * 7) % 7),
         blur: i % 4 === 0 ? 2 : i % 4 === 1 ? 4 : 6,
-        opacity: gray ? 0.16 + (i % 5) * 0.03 : 0.12 + (i % 4) * 0.03,
+        opacity:
+          color === "green"
+            ? 0.1 + (i % 4) * 0.025
+            : color === "gray"
+              ? 0.16 + (i % 5) * 0.03
+              : 0.12 + (i % 4) * 0.03,
         duration: 11 + (i % 7) * 2.4,
         delay: (i % 5) * 0.7,
-        driftX: -14 + ((t * 11) % 28), // -14..14
-        driftY: -10 + ((t * 13) % 20), // -10..10
-        color: gray ? "gray" : "red",
+        driftX: -14 + ((t * 11) % 28),
+        driftY: -10 + ((t * 13) % 20),
+        color,
       };
     });
   }, []);
 
   return (
-    <>
-      {/* Base ambient layer across page */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {/* soft top diffusion / PS5-like calm glow */}
-        <motion.div
-          aria-hidden
-         className="absolute inset-[-20%] blur-3xl"
-          style={{
-            background: `
-              radial-gradient(55% 80% at 50% 0%, rgba(189,196,207,0.5) 0%, rgba(189,196,207,0.12) 34%, rgba(189,196,207,0.04) 58%, rgba(0,0,0,0) 78%),
-              radial-gradient(42% 68% at 74% 4%, rgba(134,56,56,1) 0%, rgba(134,56,56,0.10) 36%, rgba(134,56,56,0.03) 60%, rgba(0,0,0,0) 80%),
-              radial-gradient(36% 56% at 22% 10%, rgba(128,132,138,0.16) 0%, rgba(128,132,138,0.08) 40%, rgba(0,0,0,0) 76%)
-            `,
-            
-          }}
-          animate={{
-            opacity: [0.82, 1, 0.9, 0.98, 0.82],
-            scale: [1, 1.015, 1.01, 1.02, 1],
-          }}
-          transition={{
-            duration: 14,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      {/* soft full-page atmosphere */}
+      <motion.div
+        aria-hidden
+        className="absolute inset-[-25%] blur-3xl"
+        style={{
+          background: `
+            radial-gradient(60% 80% at 50% 0%, rgba(189,196,207,0.45) 0%, rgba(189,196,207,0.12) 34%, rgba(189,196,207,0.04) 58%, rgba(0,0,0,0) 78%),
+            radial-gradient(42% 68% at 74% 4%, rgba(134,56,56,0.22) 0%, rgba(134,56,56,0.10) 36%, rgba(134,56,56,0.03) 60%, rgba(0,0,0,0) 80%),
+            radial-gradient(38% 60% at 18% 12%, rgba(128,132,138,0.16) 0%, rgba(128,132,138,0.08) 40%, rgba(0,0,0,0) 76%),
+            radial-gradient(34% 55% at 82% 72%, rgba(34,197,94,0.14) 0%, rgba(34,197,94,0.055) 42%, rgba(0,0,0,0) 76%),
+            radial-gradient(30% 42% at 12% 82%, rgba(22,163,74,0.10) 0%, rgba(22,163,74,0.04) 44%, rgba(0,0,0,0) 78%)
+          `,
+        }}
+        animate={{
+          opacity: [0.82, 1, 0.9, 0.98, 0.82],
+          scale: [1, 1.015, 1.01, 1.02, 1],
+        }}
+        transition={{
+          duration: 14,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
 
-        {/* subtle top beam / strip diffusion */}
-        <motion.div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-28 md:h-36 blur-2xl"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(192,198,210,0.14) 0%, rgba(142,70,70,0.10) 35%, rgba(0,0,0,0) 100%)",
-          }}
-          animate={{ opacity: [0.65, 0.85, 0.7, 0.65] }}
-          transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
-        />
+      {/* subtle top beam */}
+      <motion.div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-32 md:h-44 blur-2xl"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(192,198,210,0.14) 0%, rgba(142,70,70,0.08) 35%, rgba(34,197,94,0.055) 62%, rgba(0,0,0,0) 100%)",
+        }}
+        animate={{ opacity: [0.65, 0.85, 0.7, 0.65] }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
+      />
 
-        {/* very faint lower-page color continuity so it feels integrated while scrolling */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-[16rem] bottom-0 opacity-50 blur-3xl"
-          style={{
-            background: `
-              radial-gradient(35% 30% at 18% 30%, rgba(120,120,120,0.08), rgba(0,0,0,0) 70%),
-              radial-gradient(32% 26% at 80% 42%, rgba(130,52,52,0.08), rgba(0,0,0,0) 72%)
-            `,
-          }}
-        />
+      {/* lower-page color continuity */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-[14rem] bottom-0 opacity-60 blur-3xl"
+        style={{
+          background: `
+            radial-gradient(40% 30% at 18% 30%, rgba(120,120,120,0.08), rgba(0,0,0,0) 70%),
+            radial-gradient(34% 28% at 82% 44%, rgba(130,52,52,0.075), rgba(0,0,0,0) 72%),
+            radial-gradient(38% 34% at 52% 78%, rgba(34,197,94,0.075), rgba(0,0,0,0) 74%)
+          `,
+        }}
+      />
 
-        {/* floating particles */}
-        <div className="absolute inset-0">
-          {particles.map((p) => {
-            const baseColor =
-              p.color === "gray"
-                ? "rgba(202,208,214,0.9)"
-                : "rgba(142,74,74,0.9)"; // muted/matte red
+      {/* floating particles */}
+      <div className="absolute inset-0">
+        {particles.map((p) => {
+          const baseColor =
+            p.color === "gray"
+              ? "rgba(202,208,214,0.9)"
+              : p.color === "green"
+                ? "rgba(74,170,105,0.8)"
+                : "rgba(142,74,74,0.9)";
 
-            return (
-              <motion.span
-                key={p.id}
-                aria-hidden
-                className="absolute rounded-full"
-                style={{
-                  left: p.left,
-                  top: p.top,
-                  width: p.size,
-                  height: p.size,
-                  opacity: p.opacity,
-                  filter: `blur(${p.blur}px)`,
-                  background: baseColor,
-                  boxShadow:
-                    p.color === "gray"
-                      ? "0 0 18px rgba(200,205,212,0.18)"
+          return (
+            <motion.span
+              key={p.id}
+              aria-hidden
+              className="absolute rounded-full"
+              style={{
+                left: p.left,
+                top: p.top,
+                width: p.size,
+                height: p.size,
+                opacity: p.opacity,
+                filter: `blur(${p.blur}px)`,
+                background: baseColor,
+                boxShadow:
+                  p.color === "gray"
+                    ? "0 0 18px rgba(200,205,212,0.18)"
+                    : p.color === "green"
+                      ? "0 0 22px rgba(74,170,105,0.16)"
                       : "0 0 18px rgba(145,72,72,0.14)",
-                }}
-                animate={{
-                  x: [0, p.driftX, p.driftX * 0.45, 0],
-                  y: [0, p.driftY, p.driftY * -0.35, 0],
-                  opacity: [
-                    p.opacity * 0.7,
-                    p.opacity,
-                    p.opacity * 0.75,
-                    p.opacity * 0.9,
-                    p.opacity * 0.7,
-                  ],
-                  scale: [1, 1.2, 0.95, 1.05, 1],
-                }}
-                transition={{
-                  duration: p.duration,
-                  delay: p.delay,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* ultra subtle vignette to keep focus on content */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 dark:to-black/20" />
+              }}
+             
+            />
+          );
+        })}
       </div>
-    </>
+
+      {/* vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 dark:to-black/20" />
+    </div>
   );
 }
-
 function FloatingInstagram() {
   return (
     <motion.a
@@ -392,7 +415,7 @@ function EventCard({
           "w-full text-left rounded-2xl p-5 border transition",
           "shadow-sm hover:shadow-md",
           selected ? "border-black/40 dark:border-white/40" : "border-black/10 dark:border-white/10",
-          isPast ? "bg-white/60 dark:bg-white/5" : "bg-pink-500 text-white"
+          isPast ? "bg-white/60 dark:bg-white/5" : "bg-blue-700 text-white"
         )}
       >
         <div className="flex items-start justify-between gap-3">
@@ -609,7 +632,7 @@ export default function EventsPage() {
                         animate={{ height: "auto", opacity: 1, y: 0 }}
                         exit={{ height: 0, opacity: 0, y: -10 }}
                         transition={{ duration: 0.28, ease: "easeInOut" }}
-                        className="overflow-hidden"
+                        className="overflow-visible"
                       >
                         {pastEvents.length === 0 ? (
                           <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
