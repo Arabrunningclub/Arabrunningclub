@@ -20,7 +20,7 @@ const ARAB_WORLD_SVG =
 const GALLERY: GalleryEvent[] = [
   {
     id: "galentines-pilates-2026",
-    title: "Galentine’s Pilates @ Wayne State",
+    title: "Galentine’s Pilates",
     dateLabel: "Feb 21, 2026",
     dateISO: "2026-02-21",
     cover: "/images/pilates-1.jpeg",
@@ -48,6 +48,25 @@ const GALLERY: GalleryEvent[] = [
       "/images/iceskating4.jpg",
     ],
   },
+  {
+    id: "Summer-2025",
+    title: "Miscelaneous Summer 2025",
+    dateLabel: "Aug 15, 2025",
+    dateISO: "2025-08-15",
+    cover: "/images/pilates-1.jpeg",
+    images: [
+      "/images/oldarc1.jpeg",
+      "/images/oldarc2.1.jpeg",
+      "/images/oldarc3.jpeg",
+      "/images/oldarc4.jpeg",
+      "/images/oldarc5.JPeG",
+      "/images/oldarc6.JPeG",
+      "/images/oldarc7.JPeG",
+      "/images/oldarc8.JPeG",
+      "/images/oldarc9.1.png",
+      "/images/oldarc10.jpeg",
+    ],
+  }
 ];
 
 function classNames(...xs: Array<string | false | null | undefined>) {

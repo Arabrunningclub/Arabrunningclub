@@ -19,17 +19,17 @@ const ARAB_WORLD_FLAGS_SVG =
 
 // Use the SAME images as Gallery (no labels, no clicks)
 const DONATION_PHOTOS: string[] = [
-  '/images/pilates-1.jpg',
-  '/images/pilates-2.jpg',
-  '/images/pilates-3.jpg',
-  '/images/pilates-4.jpg',
-  '/images/pilates-5.JPG',
-  '/images/pilates-6.JPG',
-  '/images/OUtenniscourts.jpg',
-  '/images/pilates-8.JPG',
-  '/images/iceskating.jpg',
-  '/images/iceskating1.JPG',
+  '/images/oldarc9.1.png',
+  '/images/oldarc7.jpeg',
+  '/images/oldarc3.jpeg',
+  '/images/oldarc10.jpeg',
+  '/images/oldarc2.1.jpeg',
+  '/images/oldarc1.jpeg',
   '/images/iceskating3.jpg',
+  '/images/iceskating1.jpg',
+  '/images/pilates-2.jpg',
+  '/images/pilates-5.JPG',
+  '/images/iceskating.jpg',
   '/images/iceskating4.jpg',
 ];
 
