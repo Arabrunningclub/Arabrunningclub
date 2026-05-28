@@ -18,6 +18,7 @@ type EventSlot = {
   href: string;
   badge?: string;
   cost?: string;
+  registrationClosesAt?: string; // ISO w/ timezone
 
   // Gallery + sorting
   images?: string[];
@@ -78,16 +79,16 @@ const EVENTS: EventSlot[] = [
   {
   id: "pickleball",
   title: "ARC Pickleball Meetup",
-  dateLabel: "Fri • June 5, 2026",
+  dateLabel: "Sat • June 6, 2026",
   timeLabel: "6:00 PM – 9:00 PM",
-  startAt: "2026-06-05T18:00:00-04:00",
-  endAt: "2026-06-05T21:00:00-04:00",
+  startAt: "2026-06-06T18:00:00-04:00",
+  endAt: "2026-06-06T21:00:00-04:00",
+  registrationClosesAt: "2026-06-01T23:59:00-04:00",
 
   location: "Crowley Park",
-  mapUrl:
-    "https://maps.app.goo.gl/EUS3xE7742taSz8u7",
+  mapUrl: "https://maps.app.goo.gl/EUS3xE7742taSz8u7",
 
-  cost: "Free",
+  cost: "$5",
 
   images: [
     "/images/OUtenniscourts.jpg",
@@ -103,6 +104,41 @@ const EVENTS: EventSlot[] = [
 
   galleryId: "june-pickleball-2026",
 },
+{
+  id: "Summer-2025",
+  title: "Summer 2025 Miscellaneous",
+  dateLabel: "Sat • June 30, 2025",
+  timeLabel: "6:00 PM – 9:00 PM",
+  startAt: "2025-06-30T18:00:00-04:00",
+  endAt: "2025-06-30T21:00:00-04:00",
+
+  location: "Various around Detroit",
+  mapUrl: "https://maps.app.goo.gl/EUS3xE7742taSz8u7",
+
+  cost: "Free",
+
+  images: [
+    "/images/oldarc2.1.jpeg",
+    "/images/oldarc3.jpeg",
+    "/images/oldarc14.jpeg",
+    "/images/oldarc13.jpeg",
+    "/images/oldarc6.jpeg",
+    "/images/oldarc7.jpeg",
+    "/images/oldarc8.jpeg",
+    "/images/oldarc9.2.png",
+    "/images/oldarc10.jpeg",
+    "/images/oldarc12.1.jpeg",
+  ],
+
+  description:
+    "Join ARC for an evening of pickleball, movement, and community. All skill levels are welcome.",
+
+  href: "/pickleball",
+
+  badge: "Open",
+
+  galleryId: "june-pickleball-2026",
+}
 ];
 
 const FALLBACK_IMAGES = [

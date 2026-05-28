@@ -10,46 +10,83 @@ function getStripe() {
   return new Stripe(key, { apiVersion: "2025-07-30.basil" });
 }
 
+function cleanReturnPath(value: unknown) {
+  const fallback = "/pilates";
+
+  if (typeof value !== "string") return fallback;
+
+  const path = value.trim();
+
+  // Allows internal paths like /pickleball or /pilates
+  // Blocks full external URLs like https://scam.com
+  if (!path.startsWith("/") || path.startsWith("//")) return fallback;
+
+  return path;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
-    const { amount, rsvpId, email } = await req.json();
+
+    const {
+      amount,
+      rsvpId,
+      email,
+      returnPath,
+      eventName,
+    } = await req.json();
 
     const dollars =
       typeof amount === "string" ? Number.parseFloat(amount) : Number(amount);
+
     if (!Number.isFinite(dollars) || dollars <= 0) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
     const rid = String(rsvpId || "").trim();
+
     if (!rid) {
       return NextResponse.json({ error: "Missing rsvpId" }, { status: 400 });
     }
+
+    const cleanPath = cleanReturnPath(returnPath);
+    const cleanEventName =
+      typeof eventName === "string" && eventName.trim()
+        ? eventName.trim()
+        : "Arab Running Club Event";
 
     const cents = Math.max(50, Math.round(dollars * 100));
 
     const proto = req.headers.get("x-forwarded-proto") ?? "https";
     const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+
     const base =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? `${proto}://${host}`;
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
+      `${proto}://${host}`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       client_reference_id: rid,
-      metadata: { rsvpId: rid },
+      metadata: {
+        rsvpId: rid,
+        eventName: cleanEventName,
+        returnPath: cleanPath,
+      },
       customer_email: typeof email === "string" ? email : undefined,
       line_items: [
         {
           price_data: {
             currency: "usd",
-            product_data: { name: "Galentine’s Pilates Ticket" },
+            product_data: {
+              name: cleanEventName,
+            },
             unit_amount: cents,
           },
           quantity: 1,
         },
       ],
-      success_url: `${base}/pilates?status=success`,
-      cancel_url: `${base}/pilates?status=cancel`,
+      success_url: `${base}${cleanPath}?status=success`,
+      cancel_url: `${base}${cleanPath}?status=cancel`,
     });
 
     return NextResponse.json({ url: session.url });

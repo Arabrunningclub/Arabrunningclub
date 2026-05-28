@@ -325,7 +325,7 @@
 
         <p>
           ARC Pickleball Meetup<br />
-          Friday June 5, 2026 • 6:00 PM – 9:00 PM<br />
+          Friday June 6, 2026 • 6:00 PM – 9:00 PM<br />
           Crowley Park 🎾
         </p>
 
@@ -341,424 +341,784 @@
     </div>
 
     <script>
-      const noSound = new Audio(
-        "https://drive.google.com/uc?export=download&id=1MtujUl_ES9NUWjQK7vRvwUo9YaESUgun"
-      );
-      noSound.volume = 0.5;
-      noSound.preload = "auto";
+  const noSound = new Audio(
+    "https://drive.google.com/uc?export=download&id=1MtujUl_ES9NUWjQK7vRvwUo9YaESUgun"
+  );
+  noSound.volume = 0.5;
+  noSound.preload = "auto";
 
-      function vibe(pattern = [25]) {
-        try {
-          if (navigator.vibrate) navigator.vibrate(pattern);
-        } catch (_) {}
+  function vibe(pattern = [25]) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (_) {}
+  }
+
+  const stage = document.getElementById("stage");
+  const particlesLayer = document.getElementById("particles");
+
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbzEMLlSNdTtPfvs0M7vLrHshuiDGCnEutXhF1J7Xw4n-O7tYqZep2Q0lNJ8i37tzecw4Q/exec";
+
+  const CHECKOUT_API = "/api/checkout";
+
+  const EVENT_ID = "pickleball";
+  const EVENT_TITLE = "ARC Pickleball Meetup";
+  const EVENT_SLOT = "6:00-9:00";
+  const EVENT_DATE = "Saturday June 6, 2026";
+  const EVENT_LOCATION = "Crowley Park";
+  const MAP_URL = "https://maps.app.goo.gl/EUS3xE7742taSz8u7";
+
+  const PRICE_STRIPE = 5;
+  const PRICE_LATER = 10.00;
+
+  const RSVP_CUTOFF = new Date("2026-06-01T23:59:00-04:00");
+
+  const DRAFT_KEY = "pickleball_rsvp_draft_v1";
+
+  function isRegistrationClosed() {
+    return new Date() >= RSVP_CUTOFF;
+  }
+
+  function saveDraft_(obj) {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(obj));
+    } catch (_) {}
+  }
+
+  function loadDraft_() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function clearDraft_() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch (_) {}
+  }
+
+  let pendingRSVP = null;
+  let stepStack = [];
+
+  function pushStep(step) {
+    if (stepStack[stepStack.length - 1] !== step) stepStack.push(step);
+  }
+
+  function goStep(step) {
+    if (step === "form") showRSVPForm();
+    if (step === "pay") showPaymentStep_(pendingRSVP?.slot || EVENT_SLOT);
+  }
+
+  function backStep() {
+    if (stepStack.length <= 1) return;
+    stepStack.pop();
+    goStep(stepStack[stepStack.length - 1]);
+  }
+
+  function navBarHtml() {
+    return `
+      <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:14px;">
+        <button type="button" onclick="backStep()" aria-label="Back"
+          style="
+            background: rgba(255,255,255,0.14);
+            color:#fff;
+            border-radius:999px;
+            padding:12px 17px;
+            font-size:20px;
+            font-weight:900;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.22);
+            cursor:pointer;
+          ">
+          ←
+        </button>
+      </div>
+    `;
+  }
+
+  (function handleStatusFromQuery_() {
+    const qs = new URLSearchParams(window.location.search);
+    const status = qs.get("status");
+
+    if (!status) return;
+
+    const draft = loadDraft_();
+    if (draft) pendingRSVP = draft;
+
+    const card = document.getElementById("card");
+
+    if (status === "success") {
+      burstParticles(40, stage.clientWidth / 2, stage.clientHeight / 2);
+      clearDraft_();
+
+      card.innerHTML = `
+        <div class="tag">Paid</div>
+
+        <h1 style="margin:0 0 10px;">You’re confirmed ✅🏓</h1>
+
+        <p style="margin:0; line-height:1.6;">
+          <b>${EVENT_TITLE}</b><br/>
+          ${EVENT_DATE}<br/>
+          6:00 PM – 9:00 PM<br/>
+          ${EVENT_LOCATION}
+          <br/><br/>
+          Slot: <b>${pendingRSVP?.slot || EVENT_SLOT}</b><br/>
+          Email: <b>${pendingRSVP?.email || ""}</b>
+        </p>
+
+        <div class="mini-map">
+          📍 <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open Crowley Park in Google Maps →</a>
+        </div>
+
+        <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
+          Need to cancel or change your RSVP? Reply to the confirmation email.
+        </p>
+      `;
+    }
+
+    if (status === "cancel") {
+      card.innerHTML = `
+        <div class="tag">Payment canceled</div>
+
+        <h1 style="margin:0 0 10px;">Payment canceled</h1>
+
+        <p style="margin:0; line-height:1.55;">
+          Your payment wasn’t completed.
+          <br/><br/>
+          If you still want the spot, choose “Pay now” again.
+        </p>
+
+        <div style="margin-top:14px; text-align:center;">
+          <button type="button" onclick="showRSVPForm()" style="background: rgba(255,255,255,0.16); color:#fff;">
+            Back to RSVP
+          </button>
+        </div>
+      `;
+    }
+  })();
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(n, max));
+  }
+
+  function rectsOverlap(a, b) {
+    return !(
+      a.right <= b.left ||
+      a.left >= b.right ||
+      a.bottom <= b.top ||
+      a.top >= b.bottom
+    );
+  }
+
+  function setBusyMessage(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = "big-status";
+    el.innerHTML = `<span class="spinner"></span>${text}`;
+  }
+
+  function setPlainMessage(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = "big-status";
+    el.textContent = text;
+  }
+
+  function spawnParticle(x, y) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+
+    const options = ["🏓", "🎾", "💙", "⚡", "🟢"];
+    particle.textContent = options[Math.floor(Math.random() * options.length)];
+
+    const size = 10 + Math.random() * 22;
+    particle.style.fontSize = size + "px";
+    particle.style.left = x + "px";
+    particle.style.top = y + "px";
+
+    particlesLayer.appendChild(particle);
+    particle.addEventListener("animationend", () => particle.remove());
+  }
+
+  setInterval(() => {
+    spawnParticle(
+      Math.random() * stage.clientWidth,
+      Math.random() * stage.clientHeight
+    );
+  }, 420);
+
+  function burstParticles(
+    count = 14,
+    x = stage.clientWidth / 2,
+    y = stage.clientHeight / 2
+  ) {
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const spreadX = (Math.random() - 0.5) * 280;
+        const spreadY = (Math.random() - 0.5) * 180;
+        spawnParticle(x + spreadX, y + spreadY);
+      }, i * 14);
+    }
+  }
+
+  async function postRSVP(payload) {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  async function loadAvailability() {
+    try {
+      const res = await fetch(`${API_URL}?action=availability`);
+      const data = await res.json();
+
+      const slotData = data?.availability?.[EVENT_SLOT];
+      const spots = document.getElementById("spotsA");
+      const slotBtn = document.getElementById("slotA");
+
+      if (spots) spots.textContent = "Loading…";
+
+      if (spots && slotData) {
+        spots.textContent = `${slotData.left} spots left`;
       }
 
-      const stage = document.getElementById("stage");
-      const particlesLayer = document.getElementById("particles");
-
-      const API_URL =
-        "https://script.google.com/macros/s/AKfycbyWBrKZdZYGo4oT1KsI-a8ROrZauZkNjQdXuiDRsnzE-8dYshTElM0y9YMy-LjxZxv-rg/exec";
-
-      const EVENT_ID = "pickleball";
-      const EVENT_TITLE = "ARC Pickleball Meetup";
-      const EVENT_SLOT = "6:00-9:00";
-      const EVENT_DATE = "Friday June 5, 2026";
-      const EVENT_LOCATION = "Crowley Park";
-      const MAP_URL = "https://maps.app.goo.gl/EUS3xE7742taSz8u7";
-
-      const DRAFT_KEY = "pickleball_rsvp_draft_v1";
-
-      function saveDraft_(obj) {
-        try {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(obj));
-        } catch (_) {}
-      }
-
-      function loadDraft_() {
-        try {
-          const raw = localStorage.getItem(DRAFT_KEY);
-          return raw ? JSON.parse(raw) : null;
-        } catch (_) {
-          return null;
+      if (slotBtn && slotData) {
+        if (slotData.left <= 0) {
+          slotBtn.classList.add("full");
+          slotBtn.disabled = true;
+          if (spots) spots.textContent = "Full";
+        } else {
+          slotBtn.classList.remove("full");
+          slotBtn.disabled = false;
         }
       }
+    } catch (err) {
+      const spots = document.getElementById("spotsA");
+      if (spots) spots.textContent = "Unavailable";
 
-      function clearDraft_() {
-        try {
-          localStorage.removeItem(DRAFT_KEY);
-        } catch (_) {}
-      }
+      const msg = document.getElementById("msg");
+      if (msg) msg.textContent = "Couldn’t load spots right now. Try again in a sec.";
+    }
+  }
 
-      let pendingRSVP = null;
-      let stepStack = [];
+  let availabilityRefreshTimer = null;
 
-      function pushStep(step) {
-        if (stepStack[stepStack.length - 1] !== step) stepStack.push(step);
-      }
+  function showRSVPForm() {
+    const card = document.getElementById("card");
+    const note = document.getElementById("note");
 
-      function backStep() {
-        if (stepStack.length <= 1) return;
-        stepStack.pop();
+    if (note) note.textContent = "Bring water. Bring energy. We’ll handle the vibes.";
 
-        const step = stepStack[stepStack.length - 1];
-        if (step === "form") showRSVPForm();
-      }
+    pushStep("form");
 
-      function navBarHtml() {
-        return `
-          <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:14px;">
-            <button type="button" onclick="backStep()" aria-label="Back"
-              style="
-                background: rgba(255,255,255,0.14);
-                color:#fff;
-                border-radius:999px;
-                padding:12px 17px;
-                font-size:20px;
-                font-weight:900;
-                box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-                border: 1px solid rgba(255,255,255,0.22);
-                cursor:pointer;
-              ">
-              ←
-            </button>
-          </div>
-        `;
-      }
+    if (isRegistrationClosed()) {
+      card.innerHTML = `
+        ${navBarHtml()}
 
-      function clamp(n, min, max) {
-        return Math.max(min, Math.min(n, max));
-      }
+        <div class="tag">Registration Closed</div>
 
-      function rectsOverlap(a, b) {
-        return !(
-          a.right <= b.left ||
-          a.left >= b.right ||
-          a.bottom <= b.top ||
-          a.top >= b.bottom
-        );
-      }
+        <h1 style="margin:0 0 10px;">RSVP closed 🏓</h1>
 
-      function setBusyMessage(id, text) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.className = "big-status";
-        el.innerHTML = `<span class="spinner"></span>${text}`;
-      }
+        <p style="margin:0 0 14px; line-height:1.55;">
+          Registration for ${EVENT_TITLE} is closed.
+          <br/><br/>
+          Event: <b>${EVENT_DATE}</b><br/>
+          Time: <b>6:00 PM – 9:00 PM</b><br/>
+          Location: <b>${EVENT_LOCATION}</b>
+        </p>
 
-      function setPlainMessage(id, text) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.className = "big-status";
-        el.textContent = text;
-      }
+        <div class="mini-map">
+          📍 <b>${EVENT_LOCATION}</b><br/>
+          <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open location in Google Maps →</a>
+        </div>
+      `;
+      return;
+    }
 
-      function spawnParticle(x, y) {
-        const particle = document.createElement("div");
-        particle.className = "particle";
+    card.innerHTML = `
+      ${navBarHtml()}
 
-        const options = ["🏓", "🎾", "💙", "⚡", "🟢"];
-        particle.textContent = options[Math.floor(Math.random() * options.length)];
+      <div class="tag">Paid RSVP • $5</div>
 
-        const size = 10 + Math.random() * 22;
-        particle.style.fontSize = size + "px";
-        particle.style.left = x + "px";
-        particle.style.top = y + "px";
+      <h1 style="margin:0 0 10px;">Game time 🏓</h1>
 
-        particlesLayer.appendChild(particle);
-        particle.addEventListener("animationend", () => particle.remove());
-      }
+      <p style="margin:0 0 14px; line-height:1.55;">
+        ${EVENT_DATE}<br/>
+        <b>6:00 PM – 9:00 PM</b><br/>
+        ${EVENT_LOCATION}
+      </p>
 
-      setInterval(() => {
-        spawnParticle(
-          Math.random() * stage.clientWidth,
-          Math.random() * stage.clientHeight
-        );
-      }, 420);
+      <div class="mini-map">
+        📍 <b>${EVENT_LOCATION}</b><br/>
+        <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open location in Google Maps →</a>
+      </div>
 
-      function burstParticles(
-        count = 14,
-        x = stage.clientWidth / 2,
-        y = stage.clientHeight / 2
-      ) {
-        for (let i = 0; i < count; i++) {
-          setTimeout(() => {
-            const spreadX = (Math.random() - 0.5) * 280;
-            const spreadY = (Math.random() - 0.5) * 180;
-            spawnParticle(x + spreadX, y + spreadY);
-          }, i * 14);
-        }
-      }
+      <div class="form">
+        <input id="rsvpName"  type="text"  placeholder="Your name" autocomplete="name" />
+        <input id="rsvpEmail" type="email" placeholder="Email for confirmation" autocomplete="email" />
+        <input id="rsvpPhone" type="tel"   placeholder="Phone optional" autocomplete="tel" />
+      </div>
 
-      async function postRSVP(payload) {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        return res.json();
-      }
-
-      function showRSVPForm() {
-        const card = document.getElementById("card");
-        const note = document.getElementById("note");
-
-        if (note) note.textContent = "Bring water. Bring energy. We’ll handle the vibes.";
-
-        pushStep("form");
-
-        card.innerHTML = `
-          ${navBarHtml()}
-
-          <div class="tag">Free RSVP</div>
-
-          <h1 style="margin:0 0 10px;">Game time 🏓</h1>
-
-          <p style="margin:0 0 14px; line-height:1.55;">
-            Friday June 5, 2026<br/>
-            <b>6:00 PM – 9:00 PM</b><br/>
-            ${EVENT_LOCATION}
-          </p>
-
-          <div class="mini-map">
-            📍 <b>${EVENT_LOCATION}</b><br/>
-            <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open location in Google Maps →</a>
-          </div>
-
-          <div class="form">
-            <input id="rsvpName"  type="text"  placeholder="Your name" autocomplete="name" />
-            <input id="rsvpEmail" type="email" placeholder="Email for confirmation" autocomplete="email" />
-            <input id="rsvpPhone" type="tel"   placeholder="Phone optional" autocomplete="tel" />
-          </div>
-
-          <div class="slots">
-            <button class="slot" id="slotA" type="button" onclick="submitFreeRSVP()">
-              <div class="slot-left">
-                <div class="slot-time">6:00 PM – 9:00 PM</div>
-                <div class="slot-sub">
-                  Pickleball meetup • all skill levels welcome
-                </div>
-              </div>
-              <div class="slot-price">Free</div>
-            </button>
-          </div>
-
-          <p style="margin:12px 0 0; font-size:12px; opacity:.9;">
-            RSVP so we can plan courts, timing, and group size.
-          </p>
-
-          <p id="msg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
-        `;
-
-        const draft = pendingRSVP || loadDraft_();
-        if (draft) {
-          pendingRSVP = draft;
-          const n = document.getElementById("rsvpName");
-          const e = document.getElementById("rsvpEmail");
-          const p = document.getElementById("rsvpPhone");
-          if (n) n.value = draft.name || "";
-          if (e) e.value = draft.email || "";
-          if (p) p.value = draft.phone || "";
-        }
-      }
-
-      async function submitFreeRSVP() {
-        const name = (document.getElementById("rsvpName")?.value || "").trim();
-        const email = (document.getElementById("rsvpEmail")?.value || "").trim();
-        const phone = (document.getElementById("rsvpPhone")?.value || "").trim();
-
-        if (!name) {
-          setPlainMessage("msg", "Add your name first.");
-          return;
-        }
-
-        if (!email) {
-          setPlainMessage("msg", "Add your email so we can confirm your RSVP.");
-          return;
-        }
-
-        pendingRSVP = {
-          eventId: EVENT_ID,
-          eventTitle: EVENT_TITLE,
-          eventDate: EVENT_DATE,
-          location: EVENT_LOCATION,
-          name,
-          email,
-          phone,
-          slot: EVENT_SLOT,
-          payChoice: "free",
-          paymentStatus: "FREE",
-          paymentMethod: "free"
-        };
-
-        saveDraft_(pendingRSVP);
-
-        const btn = document.getElementById("slotA");
-        if (btn) btn.disabled = true;
-
-        setBusyMessage("msg", "Saving your RSVP…");
-
-        try {
-          const data = await postRSVP(pendingRSVP);
-
-          if (!data.ok) {
-            setPlainMessage("msg", data.error || "Something went wrong. Try again.");
-            if (btn) btn.disabled = false;
-            return;
-          }
-
-          clearDraft_();
-
-          const card = document.getElementById("card");
-          vibe([35, 30, 35]);
-          burstParticles(40, stage.clientWidth / 2, stage.clientHeight / 2);
-
-          card.innerHTML = `
-            <div class="tag">Confirmed</div>
-
-            <h1 style="margin:0 0 10px;">You’re in ✅🏓</h1>
-
-            <p style="margin:0; line-height:1.6;">
-              <b>${EVENT_TITLE}</b><br/>
-              ${EVENT_DATE}<br/>
-              6:00 PM – 9:00 PM<br/>
-              ${EVENT_LOCATION}
-              <br/><br/>
-              We’ll send confirmation to:<br/>
-              <b>${email}</b>
-            </p>
-
-            <div class="mini-map">
-              📍 <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open Crowley Park in Google Maps →</a>
+      <div class="slots">
+        <button class="slot" id="slotA" type="button" onclick="chooseSlot('${EVENT_SLOT}')">
+          <div class="slot-left">
+            <div class="slot-time">6:00 PM – 9:00 PM</div>
+            <div class="slot-sub">
+              Pickleball meetup • <span class="spots" id="spotsA">Loading…</span>
             </div>
+          </div>
+          <div class="slot-price">$5</div>
+        </button>
+      </div>
 
-            <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
-              Need to cancel or change your RSVP? Reply to the confirmation email.
-            </p>
-          `;
-        } catch (err) {
-          setPlainMessage("msg", "Couldn’t save right now. Try again.");
-          if (btn) btn.disabled = false;
-        }
-      }
+      <p style="margin:12px 0 0; font-size:12px; opacity:.9;">
+        $5 helps make sure people who sign up actually show up.
+      </p>
 
-      function sayYes() {
-        const noBtn = document.getElementById("no");
-        if (noBtn) noBtn.remove();
+      <p id="msg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
+    `;
 
-        vibe([35, 30, 35]);
-        burstParticles(32, stage.clientWidth / 2, stage.clientHeight / 2);
+    loadAvailability();
 
-        setTimeout(() => {
-          showRSVPForm();
-          setTimeout(() => burstParticles(24, stage.clientWidth / 2, stage.clientHeight / 2), 120);
-        }, 120);
-      }
+    if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
+    availabilityRefreshTimer = setInterval(loadAvailability, 12000);
 
-      let noIsFloating = false;
-      let noMoves = 0;
+    const draft = pendingRSVP || loadDraft_();
+    if (draft) {
+      pendingRSVP = draft;
+      const n = document.getElementById("rsvpName");
+      const e = document.getElementById("rsvpEmail");
+      const p = document.getElementById("rsvpPhone");
+      if (n) n.value = draft.name || "";
+      if (e) e.value = draft.email || "";
+      if (p) p.value = draft.phone || "";
+    }
+  }
 
-      function moveNo() {
-        const no = document.getElementById("no");
-        const yes = document.getElementById("yes");
-        if (!no || !yes) return;
+  async function chooseSlot(slot) {
+    if (isRegistrationClosed()) {
+      setPlainMessage("msg", "Registration is closed.");
+      return;
+    }
 
-        noSound.currentTime = 0;
-        noSound.play().catch(() => {});
+    const name = (document.getElementById("rsvpName")?.value || "").trim();
+    const email = (document.getElementById("rsvpEmail")?.value || "").trim();
+    const phone = (document.getElementById("rsvpPhone")?.value || "").trim();
 
-        vibe([20]);
-        no.classList.remove("shake");
-        void no.offsetWidth;
-        no.classList.add("shake");
+    if (!name) {
+      setPlainMessage("msg", "Add your name first.");
+      return;
+    }
 
-        const stageRect = stage.getBoundingClientRect();
+    if (!email) {
+      setPlainMessage("msg", "Add your email so we can confirm your RSVP.");
+      return;
+    }
 
-        if (!noIsFloating) {
-          const placeholder = document.createElement("span");
-          placeholder.style.display = "inline-block";
-          placeholder.style.width = no.offsetWidth + "px";
-          placeholder.style.height = no.offsetHeight + "px";
-          no.parentNode.insertBefore(placeholder, no);
+    if (availabilityRefreshTimer) clearInterval(availabilityRefreshTimer);
+    availabilityRefreshTimer = null;
 
-          const r = no.getBoundingClientRect();
-          stage.appendChild(no);
+    pendingRSVP = {
+      eventId: EVENT_ID,
+      eventTitle: EVENT_TITLE,
+      eventDate: EVENT_DATE,
+      location: EVENT_LOCATION,
+      name,
+      email,
+      phone,
+      slot,
+    };
 
-          no.style.position = "absolute";
-          no.style.zIndex = "9999";
-          no.style.left = r.left - stageRect.left + "px";
-          no.style.top = r.top - stageRect.top + "px";
+    saveDraft_(pendingRSVP);
 
-          noIsFloating = true;
-        }
+    pushStep("form");
+    pushStep("pay");
 
-        noMoves += 1;
-        const yesScale = Math.min(1 + noMoves * 0.07, 2.1);
-        yes.style.transform = `scale(${yesScale})`;
+    showPaymentStep_(slot);
+  }
 
-        const padX = 20;
-        const padTop = 70;
-        const padBottom = 110;
+  function showPaymentStep_(slot) {
+    const card = document.getElementById("card");
 
-        const noW = no.offsetWidth;
-        const noH = no.offsetHeight;
+    pushStep("pay");
 
-        const minX = padX;
-        const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+    card.innerHTML = `
+      ${navBarHtml()}
 
-        const minY = padTop;
-        const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+      <div class="tag">Payment</div>
 
-        const yesRect = yes.getBoundingClientRect();
-        const avoidMargin = 34;
+      <h1 style="margin:0 0 10px;">Lock in your spot 🏓</h1>
 
-        const avoid = {
-          left: yesRect.left - stageRect.left - avoidMargin,
-          top: yesRect.top - stageRect.top - avoidMargin,
-          right: yesRect.right - stageRect.left + avoidMargin,
-          bottom: yesRect.bottom - stageRect.top + avoidMargin,
-        };
+      <p style="margin:0 0 14px; line-height:1.55;">
+        You picked: <b>6:00 PM – 9:00 PM</b><br/>
+        Choose how you want to pay:
+      </p>
 
-        let x = minX, y = minY, tries = 0;
+      <div style="display:grid; gap:12px; margin-top:10px;">
+        <button class="slot" type="button" onclick="payNowStripe_()">
+          <div class="slot-left">
+            <div class="slot-time">Pay now card</div>
+            <div class="slot-sub">Stripe checkout • instant confirmation</div>
+          </div>
+          <div class="slot-price">$${PRICE_STRIPE.toFixed(2)}</div>
+        </button>
 
-        do {
-          x = Math.random() * (maxX - minX) + minX;
-          y = Math.random() * (maxY - minY) + minY;
-          tries++;
-        } while (
-          rectsOverlap({ left: x, top: y, right: x + noW, bottom: y + noH }, avoid) &&
-          tries < 90
-        );
+        <button class="slot" type="button" onclick="payLaterInPerson_()">
+          <div class="slot-left">
+            <div class="slot-time">Pay in person</div>
+            <div class="slot-sub">Bring $${PRICE_LATER} day-of</div>
+          </div>
+          <div class="slot-price">$${PRICE_LATER}</div>
+        </button>
+      </div>
 
-        x = clamp(x, minX, maxX);
-        y = clamp(y, minY, maxY);
+      <p style="margin:14px 0 0; font-size:12px; opacity:.9; line-height:1.5;">
+        Need to cancel or change your RSVP? Reply to your confirmation email so we can update the count.
+      </p>
 
-        no.style.left = x + "px";
-        no.style.top = y + "px";
+      <p id="payMsg" style="margin:12px 0 0; font-size:13px; opacity:.95;"></p>
+    `;
+  }
 
-        burstParticles(7, x + noW / 2, y + noH / 2);
-      }
+  function setPayButtonsDisabled_(disabled) {
+    document.querySelectorAll(".slot").forEach((btn) => {
+      if (btn && btn.tagName === "BUTTON") btn.disabled = disabled;
+    });
+  }
 
-      window.addEventListener("resize", () => {
-        const no = document.getElementById("no");
-        if (!noIsFloating || !no) return;
+  function showZelleInstructions_(slot) {
+    const card = document.getElementById("card");
 
-        const noW = no.offsetWidth;
-        const noH = no.offsetHeight;
+    const qrHtml = `
+      <img
+        src="${ZELLE_QR_IMG}"
+        alt="Zelle QR"
+        style="width:min(260px, 70vw); border-radius:16px; border:1px solid rgba(255,255,255,0.25);"
+        onerror="this.style.display='none'; document.getElementById('qrFail').style.display='block';"
+      />
+      <div id="qrFail" style="display:none; padding:14px; border-radius:16px; border:1px dashed rgba(255,255,255,0.45); opacity:.95;">
+        QR image not found. Check the filename/path in <b>ZELLE_QR_IMG</b>.
+      </div>
+    `;
 
-        const padX = 20;
-        const padTop = 70;
-        const padBottom = 110;
+    vibe([35, 30, 35]);
+    burstParticles(40, stage.clientWidth / 2, stage.clientHeight / 2);
 
-        const minX = padX;
-        const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+    clearDraft_();
 
-        const minY = padTop;
-        const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+    card.innerHTML = `
+      <div class="tag">Booked</div>
 
-        const curX = parseFloat(no.style.left) || minX;
-        const curY = parseFloat(no.style.top) || minY;
+      <h1 style="margin:0 0 10px;">You’re booked ✅🏓</h1>
 
-        no.style.left = clamp(curX, minX, maxX) + "px";
-        no.style.top = clamp(curY, minY, maxY) + "px";
+      <p style="margin:0 0 12px; line-height:1.55;">
+        Slot: <b>${slot}</b><br/>
+        Payment: <b>Zelle</b> ($${PRICE_LATER})<br/><br/>
+        Send $${PRICE_LATER} on Zelle to:<br/>
+        <b>${ZELLE_PAY_TO}</b>
+      </p>
+
+      <div style="display:flex; justify-content:center; margin:10px 0 12px;">
+        ${qrHtml}
+      </div>
+
+      <p style="margin:0; line-height:1.55;">
+        Check your email for confirmation.
+      </p>
+
+      <div class="mini-map">
+        📍 <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open Crowley Park in Google Maps →</a>
+      </div>
+    `;
+  }
+
+  async function payLaterZelle_() {
+    if (!pendingRSVP) {
+      setPlainMessage("payMsg", "Missing RSVP info — go back and try again.");
+      return;
+    }
+
+    setPayButtonsDisabled_(true);
+    setBusyMessage("payMsg", "Saving your spot…");
+
+    try {
+      const data = await postRSVP({
+        ...pendingRSVP,
+        payChoice: "pay_later",
+        paymentStatus: "NOT PAID",
+        paymentMethod: "zelle",
       });
-    </script>
+
+      if (!data.ok) {
+        setPlainMessage("payMsg", data.error || "Something went wrong.");
+        setPayButtonsDisabled_(false);
+        return;
+      }
+
+      if (data.rsvpId) {
+        pendingRSVP = { ...pendingRSVP, rsvpId: data.rsvpId };
+        saveDraft_(pendingRSVP);
+      }
+
+      showZelleInstructions_(pendingRSVP.slot);
+    } catch (err) {
+      setPlainMessage("payMsg", "Couldn’t save right now. Try again.");
+    } finally {
+      setPayButtonsDisabled_(false);
+    }
+  }
+
+  async function payLaterInPerson_() {
+    if (!pendingRSVP) {
+      setPlainMessage("payMsg", "Missing RSVP info — go back and try again.");
+      return;
+    }
+
+    setPayButtonsDisabled_(true);
+    setBusyMessage("payMsg", "Saving your spot…");
+
+    try {
+      const data = await postRSVP({
+        ...pendingRSVP,
+        payChoice: "pay_later",
+        paymentStatus: "NOT PAID",
+        paymentMethod: "in_person",
+      });
+
+      if (!data.ok) {
+        setPlainMessage("payMsg", data.error || "Something went wrong.");
+        setPayButtonsDisabled_(false);
+        return;
+      }
+
+      if (data.rsvpId) {
+        pendingRSVP = { ...pendingRSVP, rsvpId: data.rsvpId };
+        saveDraft_(pendingRSVP);
+      }
+
+      const card = document.getElementById("card");
+
+      vibe([35, 30, 35]);
+      burstParticles(40, stage.clientWidth / 2, stage.clientHeight / 2);
+
+      clearDraft_();
+
+      card.innerHTML = `
+        <div class="tag">Booked</div>
+
+        <h1 style="margin:0 0 10px;">You’re booked ✅🏓</h1>
+
+        <p style="margin:0; line-height:1.6;">
+          <b>${EVENT_TITLE}</b><br/>
+          ${EVENT_DATE}<br/>
+          6:00 PM – 9:00 PM<br/>
+          ${EVENT_LOCATION}
+          <br/><br/>
+          Payment: <b>In person</b> ($${PRICE_LATER})<br/>
+          Email: <b>${pendingRSVP.email}</b>
+        </p>
+
+        <div class="mini-map">
+          📍 <a href="${MAP_URL}" target="_blank" rel="noopener noreferrer">Open Crowley Park in Google Maps →</a>
+        </div>
+      `;
+    } catch (err) {
+      setPlainMessage("payMsg", "Couldn’t save right now. Try again.");
+    } finally {
+      setPayButtonsDisabled_(false);
+    }
+  }
+
+  async function payNowStripe_() {
+    if (!pendingRSVP) {
+      setPlainMessage("payMsg", "Missing RSVP info — go back and try again.");
+      return;
+    }
+
+    setPayButtonsDisabled_(true);
+    setBusyMessage("payMsg", "Holding your spot… sending you to Stripe.");
+
+    try {
+      let rsvpId = pendingRSVP.rsvpId;
+
+      if (!rsvpId) {
+        const data = await postRSVP({
+          ...pendingRSVP,
+          payChoice: "pay_now",
+          paymentStatus: "NOT PAID",
+          paymentMethod: "stripe",
+        });
+
+        if (!data.ok) {
+          setPlainMessage("payMsg", data.error || "Something went wrong.");
+          setPayButtonsDisabled_(false);
+          return;
+        }
+
+        rsvpId = data.rsvpId;
+
+        if (!rsvpId) {
+          setPlainMessage("payMsg", "Missing RSVP id from server.");
+          setPayButtonsDisabled_(false);
+          return;
+        }
+
+        pendingRSVP = { ...pendingRSVP, rsvpId };
+        saveDraft_(pendingRSVP);
+      }
+
+      const r = await fetch(CHECKOUT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+  amount: PRICE_STRIPE,
+  rsvpId,
+  email: pendingRSVP.email,
+  returnPath: window.location.pathname,
+  eventName: EVENT_TITLE,
+}),
+      });
+
+      const out = await r.json().catch(() => ({}));
+
+      if (!out?.url) {
+        setPlainMessage("payMsg", out?.error || "Couldn’t start checkout.");
+        setPayButtonsDisabled_(false);
+        return;
+      }
+
+      if (window.top) window.top.location.href = out.url;
+      else window.location.href = out.url;
+    } catch (err) {
+      setPlainMessage("payMsg", "Checkout failed. Try again.");
+      setPayButtonsDisabled_(false);
+    }
+  }
+
+  function sayYes() {
+    const noBtn = document.getElementById("no");
+    if (noBtn) noBtn.remove();
+
+    vibe([35, 30, 35]);
+    burstParticles(32, stage.clientWidth / 2, stage.clientHeight / 2);
+
+    setTimeout(() => {
+      showRSVPForm();
+      setTimeout(() => burstParticles(24, stage.clientWidth / 2, stage.clientHeight / 2), 120);
+    }, 120);
+  }
+
+  let noIsFloating = false;
+  let noMoves = 0;
+
+  function moveNo() {
+    const no = document.getElementById("no");
+    const yes = document.getElementById("yes");
+    if (!no || !yes) return;
+
+    noSound.currentTime = 0;
+    noSound.play().catch(() => {});
+
+    vibe([20]);
+    no.classList.remove("shake");
+    void no.offsetWidth;
+    no.classList.add("shake");
+
+    const stageRect = stage.getBoundingClientRect();
+
+    if (!noIsFloating) {
+      const placeholder = document.createElement("span");
+      placeholder.style.display = "inline-block";
+      placeholder.style.width = no.offsetWidth + "px";
+      placeholder.style.height = no.offsetHeight + "px";
+      no.parentNode.insertBefore(placeholder, no);
+
+      const r = no.getBoundingClientRect();
+      stage.appendChild(no);
+
+      no.style.position = "absolute";
+      no.style.zIndex = "9999";
+      no.style.left = r.left - stageRect.left + "px";
+      no.style.top = r.top - stageRect.top + "px";
+
+      noIsFloating = true;
+    }
+
+    noMoves += 1;
+    const yesScale = Math.min(1 + noMoves * 0.07, 2.1);
+    yes.style.transform = `scale(${yesScale})`;
+
+    const padX = 20;
+    const padTop = 70;
+    const padBottom = 110;
+
+    const noW = no.offsetWidth;
+    const noH = no.offsetHeight;
+
+    const minX = padX;
+    const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+
+    const minY = padTop;
+    const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+
+    const yesRect = yes.getBoundingClientRect();
+    const avoidMargin = 34;
+
+    const avoid = {
+      left: yesRect.left - stageRect.left - avoidMargin,
+      top: yesRect.top - stageRect.top - avoidMargin,
+      right: yesRect.right - stageRect.left + avoidMargin,
+      bottom: yesRect.bottom - stageRect.top + avoidMargin,
+    };
+
+    let x = minX, y = minY, tries = 0;
+
+    do {
+      x = Math.random() * (maxX - minX) + minX;
+      y = Math.random() * (maxY - minY) + minY;
+      tries++;
+    } while (
+      rectsOverlap({ left: x, top: y, right: x + noW, bottom: y + noH }, avoid) &&
+      tries < 90
+    );
+
+    x = clamp(x, minX, maxX);
+    y = clamp(y, minY, maxY);
+
+    no.style.left = x + "px";
+    no.style.top = y + "px";
+
+    burstParticles(7, x + noW / 2, y + noH / 2);
+  }
+
+  window.addEventListener("resize", () => {
+    const no = document.getElementById("no");
+    if (!noIsFloating || !no) return;
+
+    const noW = no.offsetWidth;
+    const noH = no.offsetHeight;
+
+    const padX = 20;
+    const padTop = 70;
+    const padBottom = 110;
+
+    const minX = padX;
+    const maxX = Math.max(minX, stage.clientWidth - noW - padX);
+
+    const minY = padTop;
+    const maxY = Math.max(minY, stage.clientHeight - noH - padBottom);
+
+    const curX = parseFloat(no.style.left) || minX;
+    const curY = parseFloat(no.style.top) || minY;
+
+    no.style.left = clamp(curX, minX, maxX) + "px";
+    no.style.top = clamp(curY, minY, maxY) + "px";
+  });
+</script>
   </body>
 </html>
