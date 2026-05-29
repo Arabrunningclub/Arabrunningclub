@@ -24,6 +24,23 @@ function cleanReturnPath(value: unknown) {
   return path;
 }
 
+function cleanEventKeyFrom(value: unknown, eventName: string) {
+  if (typeof value === "string") {
+    const key = value.trim().toLowerCase();
+
+    if (key === "pilates" || key === "pickleball") {
+      return key;
+    }
+  }
+
+  // fallback if frontend forgets to send eventKey
+  if (eventName.toLowerCase().includes("pickleball")) {
+    return "pickleball";
+  }
+
+  return "pilates";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
@@ -34,6 +51,7 @@ export async function POST(req: NextRequest) {
       email,
       returnPath,
       eventName,
+      eventKey,
     } = await req.json();
 
     const dollars =
@@ -50,10 +68,13 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPath = cleanReturnPath(returnPath);
+
     const cleanEventName =
       typeof eventName === "string" && eventName.trim()
         ? eventName.trim()
-        : "Arab Running Club Event";
+        : "Arab Rec Club Event";
+
+    const cleanEventKey = cleanEventKeyFrom(eventKey, cleanEventName);
 
     const cents = Math.max(50, Math.round(dollars * 100));
 
@@ -71,6 +92,7 @@ export async function POST(req: NextRequest) {
         rsvpId: rid,
         eventName: cleanEventName,
         returnPath: cleanPath,
+        eventKey: cleanEventKey,
       },
       customer_email: typeof email === "string" ? email : undefined,
       line_items: [

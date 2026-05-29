@@ -10,6 +10,15 @@ function getStripe() {
   return new Stripe(key, { apiVersion: "2025-07-30.basil" });
 }
 
+function getAppsScriptUrl(eventKey: string) {
+  const map: Record<string, string | undefined> = {
+    pilates: process.env.APPS_SCRIPT_WEB_APP_URL_PILATES,
+    pickleball: process.env.APPS_SCRIPT_WEB_APP_URL_PICKLEBALL,
+  };
+
+  return map[eventKey];
+}
+
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
   const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -23,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const stripe = getStripe();
-    const buf = Buffer.from(await req.arrayBuffer()); // byte-accurate body
+    const buf = Buffer.from(await req.arrayBuffer());
     const event = stripe.webhooks.constructEvent(buf, sig, whSecret);
 
     if (event.type === "checkout.session.completed") {
@@ -35,45 +44,55 @@ export async function POST(req: NextRequest) {
           ? session.client_reference_id
           : "");
 
-      if (rsvpId) {
-        const appsUrl = process.env.APPS_SCRIPT_WEB_APP_URL; // your /exec URL
-        const secret = process.env.APPS_SCRIPT_MARKPAID_SECRET; // must match MARKPAID_SECRET in Apps Script
+      const eventKey = String(session.metadata?.eventKey || "").trim();
 
-        if (!appsUrl || !secret) {
-          throw new Error(
-            "Missing APPS_SCRIPT_WEB_APP_URL or APPS_SCRIPT_MARKPAID_SECRET"
-          );
-        }
-
-        const resp = await fetch(appsUrl, {
-          method: "POST",
-          // Keep as text/plain to avoid Apps Script weirdness + matches your earlier pattern
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "markPaid",
-            secret,
-            rsvpId,
-            stripeSessionId: session.id,
-          }),
-        });
-
-        const out = await resp.json().catch(() => ({} as any));
-        if (!out?.ok) {
-          console.error("Apps Script markPaid failed:", out);
-          // Throwing makes Stripe retry the webhook later (good)
-          throw new Error("markPaid failed");
-        }
-
-        console.log("✅ Marked PAID in sheet", { rsvpId, sessionId: session.id });
-      } else {
-        console.warn("⚠️ No rsvpId on session; cannot mark paid");
+      if (!rsvpId) {
+        console.warn("No rsvpId on session; cannot mark paid");
+        return NextResponse.json({ received: true }, { status: 200 });
       }
+
+      if (!eventKey) {
+        throw new Error("Missing eventKey in Stripe session metadata");
+      }
+
+      const appsUrl = getAppsScriptUrl(eventKey);
+      const secret = process.env.APPS_SCRIPT_MARKPAID_SECRET;
+
+      if (!appsUrl || !secret) {
+        throw new Error(
+          `Missing Apps Script URL or secret for eventKey: ${eventKey}`
+        );
+      }
+
+      const resp = await fetch(appsUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "payment_update",
+          secret,
+          rsvpId,
+          paymentStatus: "PAID",
+          stripeSessionId: session.id,
+        }),
+      });
+
+      const out = await resp.json().catch(() => ({} as any));
+
+      if (!out?.ok) {
+        console.error("Apps Script payment_update failed:", out);
+        throw new Error("payment_update failed");
+      }
+
+      console.log("Marked PAID in sheet", {
+        eventKey,
+        rsvpId,
+        sessionId: session.id,
+      });
     }
 
-    // Always acknowledge receipt
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err: any) {
     console.error("Webhook error:", err?.message || err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    return NextResponse.json({ error: "Webhook error" }, { status: 400 });
   }
 }

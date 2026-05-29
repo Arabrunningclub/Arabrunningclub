@@ -979,25 +979,26 @@
   amount: PRICE_STRIPE,
   rsvpId,
   email: pendingRSVP.email,
-  returnPath: window.location.pathname,
+  returnPath: "/pickleball",
   eventName: EVENT_TITLE,
+  eventKey: "pickleball",
 }),
       });
 
       const out = await r.json().catch(() => ({}));
 
-      if (!out?.url) {
-        setPlainMessage("payMsg", out?.error || "Couldn’t start checkout.");
-        setPayButtonsDisabled_(false);
-        return;
-      }
+if (!out?.url) {
+  setPlainMessage("payMsg", out?.error || "Couldn’t start checkout.");
+  setPayButtonsDisabled_(false);
+  return;
+}
 
-      if (window.top) window.top.location.href = out.url;
-      else window.location.href = out.url;
-    } catch (err) {
-      setPlainMessage("payMsg", "Checkout failed. Try again.");
-      setPayButtonsDisabled_(false);
-    }
+window.top.location.href = out.url;
+} catch (err) {
+  console.error("payNowStripe_ error:", err);
+  setPlainMessage("payMsg", `Checkout failed: ${err?.message || err}`);
+  setPayButtonsDisabled_(false);
+}
   }
 
   function sayYes() {
