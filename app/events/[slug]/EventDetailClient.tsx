@@ -13,6 +13,7 @@ import {
   CircleCheckBig,
   CircleX,
   Clock3,
+  LoaderCircle,
   Mail,
   MapPin,
   Phone,
@@ -43,6 +44,7 @@ type RegistrationMessage = {
   text: string;
   amountDue?: number;
   paymentMethod?: string;
+  paymentStatus?: "pending" | "paid";
   rsvpId?: string;
   checkoutError?: string;
 };
@@ -111,6 +113,7 @@ export default function EventDetailClient({
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [availabilityError, setAvailabilityError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [checkoutOpening, setCheckoutOpening] = useState(false);
   const [message, setMessage] = useState<RegistrationMessage | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [beforeOpen, setBeforeOpen] = useState(false);
@@ -240,6 +243,7 @@ export default function EventDetailClient({
         text: "Your payment was completed. We’ll send event updates to the email used at checkout.",
         amountDue: Number(returnedSession?.cardPrice) || 0,
         paymentMethod: "Card",
+        paymentStatus: "paid",
       });
     } else {
       const returnedRsvpId = params.get("rsvpId") || "";
@@ -250,14 +254,22 @@ export default function EventDetailClient({
           : "Your payment was not completed. Start registration again to reserve your spot.",
         amountDue: Number(returnedSession?.cardPrice) || 0,
         paymentMethod: "Card",
+        paymentStatus: "pending",
         rsvpId: returnedRsvpId,
         checkoutError: returnedRsvpId
           ? "Checkout was canceled. Complete payment within 30 minutes or the temporary hold will expire."
           : "Checkout was canceled and no payment was made.",
       });
     }
-    setAboutOpen(true);
-    setBeforeOpen(true);
+    const scrollTimer = window.setTimeout(() => {
+      document.getElementById("registration")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+
+    window.history.replaceState({}, "", `${window.location.pathname}#registration`);
+    return () => window.clearTimeout(scrollTimer);
   }, [sortedSessions]);
 
   useEffect(() => {
@@ -297,6 +309,7 @@ export default function EventDetailClient({
   }
 
   async function createStripeCheckout(rsvpId: string) {
+    setCheckoutOpening(true);
     const response = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -326,6 +339,47 @@ export default function EventDetailClient({
         ...current,
         checkoutError: error instanceof Error ? error.message : "Unable to open secure checkout",
       } : current);
+      setCheckoutOpening(false);
+      setBusy(false);
+    }
+  }
+
+  async function switchPaymentMethod(method: string) {
+    if (!message?.rsvpId || method === "Card") return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/rsvp/payment-method", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rsvpId: message.rsvpId,
+          eventId: event.eventId,
+          sessionId,
+          paymentMethod: method,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Unable to change the payment method");
+      }
+
+      setPaymentMethod(method);
+      setMessage({
+        kind: "success",
+        text: method === "None"
+          ? "Your registration is confirmed. No payment is required."
+          : `Your registration is confirmed. You can ${paymentLabel(method).toLowerCase()} at the event.`,
+        amountDue: Number(data.amountDue) || 0,
+        paymentMethod: method,
+        paymentStatus: "pending",
+        rsvpId: message.rsvpId,
+      });
+    } catch (error) {
+      setMessage((current) => current ? {
+        ...current,
+        checkoutError: error instanceof Error ? error.message : "Unable to change the payment method",
+      } : current);
+    } finally {
       setBusy(false);
     }
   }
@@ -363,6 +417,7 @@ export default function EventDetailClient({
           : `${status} We’ll send event updates to ${email}.`,
         amountDue,
         paymentMethod,
+        paymentStatus: paymentMethod === "Card" && amountDue > 0 ? "pending" : undefined,
         rsvpId: String(data.rsvpId || ""),
       };
       setMessage(confirmation);
@@ -380,6 +435,7 @@ export default function EventDetailClient({
             text: "Your spot is temporarily held, but your registration is not confirmed until payment is complete.",
             checkoutError: error instanceof Error ? error.message : "Unable to open secure checkout",
           });
+          setCheckoutOpening(false);
         }
       }
     } catch (error) {
@@ -406,7 +462,28 @@ export default function EventDetailClient({
     <main
       className="min-h-screen bg-white pt-20 text-black transition-colors dark:bg-black dark:text-white"
       style={themeStyle}
+      aria-busy={checkoutOpening}
     >
+      {checkoutOpening && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/70 px-6 backdrop-blur-md"
+          role="status"
+          aria-live="assertive"
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl border border-white/15 p-8 text-center shadow-2xl"
+            style={{ backgroundColor: theme.darkRegistrationBackground, color: theme.darkRegistrationText }}
+          >
+            <LoaderCircle
+              className="mx-auto h-12 w-12 animate-spin"
+              style={{ color: theme.accentColor }}
+              aria-hidden="true"
+            />
+            <h2 className="mt-5 text-2xl font-black">Opening checkout</h2>
+            <p className="mt-2 text-sm opacity-75">Please wait while we connect you to secure Stripe checkout.</p>
+          </div>
+        </div>
+      )}
       <section className="relative min-h-[62vh] overflow-hidden bg-[var(--event-hero-start)] text-[var(--event-hero-text)]">
         {featuredImage && (
           <img
@@ -554,8 +631,12 @@ export default function EventDetailClient({
                 href={event.mapUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full border px-5 py-3 font-semibold"
-                style={{ borderColor: theme.accentColor, color: theme.accentColor }}
+                className="rounded-full border px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:brightness-95"
+                style={{
+                  borderColor: theme.buttonBackground,
+                  backgroundColor: theme.buttonBackground,
+                  color: theme.buttonText,
+                }}
               >
                 Open map
               </a>
@@ -571,8 +652,12 @@ export default function EventDetailClient({
             </a>
             <a
               href={`/api/calendar?eventId=${encodeURIComponent(event.eventId)}${selectedSession?.sessionId ? `&sessionId=${encodeURIComponent(selectedSession.sessionId)}` : ""}`}
-              className="rounded-full border px-5 py-3 font-semibold"
-              style={{ borderColor: theme.accentColor, color: theme.accentColor }}
+              className="rounded-full border px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:brightness-95"
+              style={{
+                borderColor: theme.buttonBackground,
+                backgroundColor: theme.buttonBackground,
+                color: theme.buttonText,
+              }}
             >
               Download calendar file
             </a>
@@ -661,17 +746,17 @@ export default function EventDetailClient({
                   <div className="mt-4 rounded-xl border border-black/10 p-4">
                     <p className="text-xs font-bold uppercase tracking-wider opacity-60">
                       {message.paymentMethod === "Card"
-                        ? message.checkoutError
-                          ? "Payment required"
-                          : "Online payment"
+                        ? message.paymentStatus === "paid"
+                          ? "Online payment"
+                          : "Payment required"
                         : "Amount due at the event"}
                     </p>
                     <p className="mt-1 text-2xl font-bold">${message.amountDue.toFixed(2)}</p>
                     <p className="mt-1 text-xs opacity-65">
                       {message.paymentMethod === "Card"
-                        ? message.checkoutError
-                          ? "Complete payment securely through Stripe when you’re ready."
-                          : "Payment was completed securely on Stripe."
+                        ? message.paymentStatus === "paid"
+                          ? "Payment was completed securely on Stripe."
+                          : "Complete payment securely through Stripe when you’re ready."
                         : "Pay when you arrive at the event."}
                     </p>
                   </div>
@@ -692,6 +777,27 @@ export default function EventDetailClient({
                   <p role="alert" className="mt-3 rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-900">
                     {message.checkoutError}
                   </p>
+                )}
+                {message.checkoutError && message.rsvpId && methods.some((method) => method !== "Card") && (
+                  <div className="mt-4 rounded-xl border border-black/10 p-4 dark:border-white/10">
+                    <p className="text-sm font-bold">Prefer another payment method?</p>
+                    <div className="mt-3 grid gap-2">
+                      {methods.filter((method) => method !== "Card").map((method) => (
+                        <button
+                          key={method}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => switchPaymentMethod(method)}
+                          className="flex w-full items-center justify-between rounded-xl border border-black/15 px-4 py-3 text-left font-bold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 dark:border-white/15"
+                        >
+                          <span>{busy ? "Updating…" : paymentLabel(method)}</span>
+                          <span>
+                            {selectedSession?.payLaterPrice ? `$${selectedSession.payLaterPrice}` : "Free"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 {(!message.checkoutError || !message.rsvpId) && (
                   <button
@@ -812,7 +918,9 @@ export default function EventDetailClient({
                           return (
                             <label
                               key={method}
-                              className="flex cursor-pointer items-center justify-between rounded-xl border border-black/10 p-4"
+                              className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-black/[0.04] focus-within:ring-2 focus-within:ring-[var(--event-accent)] focus-within:ring-offset-2 dark:hover:bg-black/15 ${
+                                selected ? "border-transparent bg-black/[0.055] shadow-md dark:bg-black/20" : "border-black/15 dark:border-white/10"
+                              }`}
                               style={selected ? { borderColor: theme.accentColor } : undefined}
                             >
                               <input
@@ -823,7 +931,17 @@ export default function EventDetailClient({
                                 onChange={() => setPaymentMethod(method)}
                                 className="sr-only"
                               />
-                              <span className="flex items-center gap-3 font-bold"><WalletCards className="h-5 w-5" style={{ color: theme.accentColor }} />{paymentLabel(method)}</span>
+                              <span className="flex items-center gap-3 font-bold">
+                                <span
+                                  className="grid h-5 w-5 place-items-center rounded-full border-2"
+                                  style={{ borderColor: theme.accentColor }}
+                                  aria-hidden="true"
+                                >
+                                  {selected && <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: theme.accentColor }} />}
+                                </span>
+                                <WalletCards className="h-5 w-5" style={{ color: theme.accentColor }} />
+                                {paymentLabel(method)}
+                              </span>
                               <span className="font-black">{price ? `$${price}` : "Free"}</span>
                             </label>
                           );
@@ -858,7 +976,7 @@ export default function EventDetailClient({
 
                   <button
                     disabled={busy || !sessionId}
-                    className="group flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-bold shadow-sm transition hover:-translate-y-0.5 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="group flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 px-6 py-4 text-base font-bold shadow-lg shadow-black/20 ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--event-accent)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     style={{ backgroundColor: theme.buttonBackground, color: theme.buttonText }}
                   >
                     {busy ? "Saving your spot…" : selectedAvailability?.full ? "Join the waitlist" : "Save my spot"}
@@ -952,7 +1070,7 @@ function InviteField({
       <span className="mb-1.5 block text-xs font-bold opacity-80">
         {label}{required ? " *" : ""}
       </span>
-      <span className="flex items-center gap-3 rounded-xl border border-black/15 px-4 transition focus-within:border-[var(--event-accent)]">
+      <span className="flex items-center gap-3 rounded-xl border border-black/15 bg-black/[0.035] px-4 shadow-inner shadow-black/10 transition focus-within:border-[var(--event-accent)] focus-within:bg-black/[0.055] dark:border-white/10 dark:bg-black/15 dark:focus-within:bg-black/20">
         <span className="text-[var(--event-accent)] [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
         <input
           type={type}

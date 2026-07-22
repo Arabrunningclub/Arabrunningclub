@@ -201,12 +201,18 @@ function updatePayment_(body) {
   const incomingStripeSessionId = text_(body.stripeSessionId);
   const stripeSessionCol = headers.indexOf("Stripe Session ID");
   const currentStripeSessionId = stripeSessionCol >= 0 ? text_(values[rowIndex][stripeSessionCol]) : "";
-  if (body.onlyIfCurrentStripeSession === true && currentStripeSessionId &&
+  if (body.onlyIfCurrentStripeSession === true &&
       incomingStripeSessionId !== currentStripeSessionId) {
     return { ok: true, rsvpId, ignored: true, reason: "Superseded Stripe session" };
   }
   setByHeader_(sheet, headers, rowIndex + 1, "Payment Status", text_(body.paymentStatus || "Paid"));
   setByHeader_(sheet, headers, rowIndex + 1, "Stripe Session ID", incomingStripeSessionId);
+  if (body.paymentMethod) {
+    setByHeader_(sheet, headers, rowIndex + 1, "Payment Method", text_(body.paymentMethod));
+  }
+  if (body.amountDue !== undefined) {
+    setByHeader_(sheet, headers, rowIndex + 1, "Amount Due", number_(body.amountDue));
+  }
   if (body.registrationStatus) {
     setByHeader_(sheet, headers, rowIndex + 1, "Registration Status", text_(body.registrationStatus));
   }
@@ -214,9 +220,17 @@ function updatePayment_(body) {
     ensureHeader_(sheet, headers, "Payment Deadline");
     setByHeader_(sheet, headers, rowIndex + 1, "Payment Deadline", date_(body.paymentDeadline));
   }
+  if (body.clearPaymentDeadline === true && headers.indexOf("Payment Deadline") >= 0) {
+    setByHeader_(sheet, headers, rowIndex + 1, "Payment Deadline", "");
+  }
   if (body.amountPaid !== undefined) setByHeader_(sheet, headers, rowIndex + 1, "Amount Paid", number_(body.amountPaid));
   if (text_(body.paymentStatus) === "Paid") trySendConfirmation_(rsvpId);
-  return { ok: true, rsvpId };
+  return {
+    ok: true,
+    rsvpId,
+    paymentMethod: body.paymentMethod ? text_(body.paymentMethod) : undefined,
+    amountDue: body.amountDue !== undefined ? number_(body.amountDue) : undefined,
+  };
 }
 
 function isActiveRsvp_(row) {

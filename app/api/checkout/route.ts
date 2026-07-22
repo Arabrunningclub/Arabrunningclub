@@ -142,8 +142,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${base}${cleanPath}?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}${cleanPath}?status=cancel&rsvpId=${encodeURIComponent(rid)}&sessionId=${encodeURIComponent(eventSession.sessionId)}`,
+      success_url: `${base}${cleanPath}?status=success&session_id={CHECKOUT_SESSION_ID}&rsvpId=${encodeURIComponent(rid)}&sessionId=${encodeURIComponent(eventSession.sessionId)}#registration`,
+      cancel_url: `${base}${cleanPath}?status=cancel&rsvpId=${encodeURIComponent(rid)}&sessionId=${encodeURIComponent(eventSession.sessionId)}#registration`,
     });
 
     try {
