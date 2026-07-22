@@ -3,10 +3,22 @@
 import type React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  HandCoins,
+  HeartHandshake,
+  Home,
+  Images,
+  ShoppingBag,
+} from "lucide-react";
+import { useSiteData } from "@/hooks/use-site-data";
 
-const navItems = [
+const FALLBACK_NAV_ITEMS = [
   { name: "Home", href: "/" },
   { name: "Events", href: "/events" },
   { name: "Charity", href: "/charity" },
@@ -33,13 +45,33 @@ export default function Layout({
   children: React.ReactNode;
   transparent?: boolean;
 }) {
+  const siteData = useSiteData();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBottomBarOpen, setIsBottomBarOpen] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(getInitialTheme);
   const [mounted, setMounted] = useState(false);
+  const navItems =
+    siteData?.navigation?.length
+      ? siteData.navigation.map((item) => ({
+          name: item.label,
+          href: item.url,
+          external: item.external,
+        }))
+      : FALLBACK_NAV_ITEMS;
+  const organizationName =
+    typeof siteData?.settings?.["site.name"] === "string"
+      ? String(siteData.settings["site.name"])
+      : "Arab Recreational Club";
+  const isEventDetailPage = /^\/events\/[^/]+/.test(pathname);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setIsBottomBarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -73,7 +105,7 @@ export default function Layout({
           <Link href="/" className="relative w-24 h-24">
             <Image
               src={mounted && isDark ? "/logo-dark.png" : "/logo.png"}
-              alt="Arab Running Club Logo"
+              alt="Arab Recreational Club Logo"
               fill
               className="object-contain"
               priority
@@ -156,8 +188,12 @@ export default function Layout({
       </main>
 
       {!transparent && (
-        <footer className="bg-background text-foreground py-6 text-center">
-          © {new Date().getFullYear()} Arab Recreational Club. All rights reserved.
+        <footer
+          className={`bg-background px-4 text-center text-foreground ${
+            isEventDetailPage ? "py-6" : "pb-24 pt-6 md:py-6"
+          }`}
+        >
+          © {new Date().getFullYear()} {organizationName}. All rights reserved.
         </footer>
       )}
 
@@ -232,6 +268,92 @@ export default function Layout({
           </>
         )}
       </AnimatePresence>
+
+      {!isEventDetailPage && (
+      <motion.nav
+        layout
+        aria-label="Quick mobile navigation"
+        className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-[80] md:hidden"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {isBottomBarOpen ? (
+            <motion.div
+              key="expanded-mobile-bar"
+              initial={{ opacity: 0, width: 52, scale: 0.92 }}
+              animate={{ opacity: 1, width: "auto", scale: 1 }}
+              exit={{ opacity: 0, width: 52, scale: 0.92 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+              className="flex items-center gap-1 overflow-hidden rounded-full border border-white/50 bg-white/55 p-1.5 text-neutral-900 shadow-[0_18px_45px_rgba(0,0,0,0.2)] backdrop-blur-2xl backdrop-saturate-150 dark:border-white/15 dark:bg-black/45 dark:text-white"
+            >
+              {navItems.slice(0, 6).map((item) => {
+                const active = !item.external && (pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
+                const content = (
+                  <span
+                    className={[
+                      "grid h-10 w-10 place-items-center rounded-full transition",
+                      active ? "bg-neutral-900 text-white dark:bg-white dark:text-black" : "hover:bg-black/5 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    <MobileNavIcon name={item.name} />
+                  </span>
+                );
+
+                return item.external ? (
+                  <a key={item.name} href={item.href} target="_blank" rel="noopener noreferrer" aria-label={item.name} title={item.name}>
+                    {content}
+                  </a>
+                ) : (
+                  <Link key={item.name} href={item.href} aria-label={item.name} title={item.name}>
+                    {content}
+                  </Link>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setIsBottomBarOpen(false)}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/10 hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
+                aria-label="Collapse quick navigation"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="collapsed-mobile-bar"
+              type="button"
+              initial={{ opacity: 0, scale: 0.82 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.82 }}
+              onClick={() => setIsBottomBarOpen(true)}
+              className="grid h-[3.25rem] w-[3.25rem] place-items-center rounded-full border border-white/50 bg-white/45 text-neutral-900 shadow-[0_16px_40px_rgba(0,0,0,0.2)] backdrop-blur-2xl backdrop-saturate-150 dark:border-white/15 dark:bg-black/35 dark:text-white"
+              aria-label="Expand quick navigation"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </motion.nav>
+      )}
     </div>
   );
+}
+
+function MobileNavIcon({ name }: { name: string }) {
+  const iconClass = "h-5 w-5";
+  switch (name.toLowerCase()) {
+    case "home":
+      return <Home className={iconClass} />;
+    case "events":
+      return <CalendarDays className={iconClass} />;
+    case "charity":
+      return <HeartHandshake className={iconClass} />;
+    case "donations":
+      return <HandCoins className={iconClass} />;
+    case "shop":
+      return <ShoppingBag className={iconClass} />;
+    case "gallery":
+      return <Images className={iconClass} />;
+    default:
+      return <span className="h-2 w-2 rounded-full bg-current" />;
+  }
 }

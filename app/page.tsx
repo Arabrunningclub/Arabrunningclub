@@ -3,8 +3,10 @@
 import Layout from "@/components/layout";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Metadata } from "next";   // ✅ add this
+import { useSiteData } from "@/hooks/use-site-data";
+import { eventPath } from "@/lib/site-data";
 export default function HomePage() {
+  const siteData = useSiteData();
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("theme");
@@ -12,6 +14,20 @@ export default function HomePage() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const [email, setEmail] = useState("");
+  const content = (key: string, fallback: string) =>
+    siteData?.content?.[key]?.value || fallback;
+  const contactEmail =
+    typeof siteData?.settings?.["contact.email"] === "string"
+      ? String(siteData.settings["contact.email"])
+      : "arabrunningclub@gmail.com";
+  const homepageEventCount =
+    typeof siteData?.settings?.["events.homepage_count"] === "number"
+      ? Number(siteData.settings["events.homepage_count"])
+      : 3;
+  const upcomingEvents = (siteData?.events || [])
+    .filter((event) => new Date(event.endAt).getTime() >= Date.now())
+    .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt))
+    .slice(0, homepageEventCount);
 
 
   // Watch <html class="dark"> toggles from your header button
@@ -62,17 +78,17 @@ export default function HomePage() {
       {/* Overlay content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
       <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg text-black dark:text-gray-200">
-        ARC
+        {content("home.hero.title", "ARC")}
       </h1>
       <p className="mt-4 text-lg md:text-xl text-black dark:text-gray-200 max-w-2xl">
-  Join a community that inspires, motivates, and connects through the love of fitness.
+  {content("home.hero.description", "Join a community that inspires, motivates, and connects through the love of fitness.")}
 </p>
       <div className="mt-6">
         <Link
         href="/events"
         className="inline-block bg-white text-black border font-semibold rounded-full px-6 py-3 hover:bg-black hover:text-white transition-colors"
         >
-        Join Us Today
+        {content("home.hero.button", "Join Us Today")}
         </Link>
       </div>
       </div>
@@ -90,8 +106,30 @@ export default function HomePage() {
     <section className="py-16 bg-white-100 dark:bg-[#000000]">
   <div className="container mx-auto px-4">
     <h2 className="text-3xl font-bold text-center mb-8 text-[#00000] dark:text-white">
-          Upcoming Events
+          {content("home.events.heading", "Upcoming Events")}
         </h2>
+        {upcomingEvents.length > 0 && (
+          <div className="mx-auto mb-8 grid max-w-5xl gap-4 md:grid-cols-3">
+            {upcomingEvents.map((event) => (
+              <Link
+                key={event.eventId}
+                href={eventPath(event)}
+                className="rounded-2xl border border-black/10 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+              >
+                <p className="text-sm font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                  {new Intl.DateTimeFormat("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: event.timeZone || "America/Detroit",
+                  }).format(new Date(event.startAt))}
+                </p>
+                <h3 className="mt-2 text-xl font-bold">{event.title}</h3>
+                <p className="mt-2 text-sm opacity-75">{event.venue}</p>
+              </Link>
+            ))}
+          </div>
+        )}
         <div className="text-center">
           <Link
             href="/events"
@@ -106,12 +144,10 @@ export default function HomePage() {
     <section className="py-16 bg-white dark:bg-[#000000]">
   <div className="container mx-auto px-4">
     <h2 className="text-3xl font-bold text-center mb-8 text-black dark:text-white">
-          About Arab Running Club
+          {content("home.about.heading", "About Arab Running Club")}
         </h2>
          <p className="text-lg text-center max-w-3xl mx-auto opacity-80 text-gray-700 dark:text-gray-300">
-          Arab Running Club (ARC) is dedicated to promoting health, fitness,
-          and community among Arabs. We organize events, support charitable
-          causes, and create a space for Arabs to connect through fitness.
+          {content("home.about.body", "Arab Running Club (ARC) is dedicated to promoting health, fitness, and community among Arabs. We organize events, support charitable causes, and create a space for Arabs to connect through fitness.")}
         </p>
         <div className="text-center mt-8">
           <Link
@@ -127,7 +163,7 @@ export default function HomePage() {
     <section className="py-16 bg-gray-100 dark:bg-[#0b0d0e]">
   <div className="container mx-auto px-4">
     <h2 className="text-3xl font-bold text-center mb-8 text-black dark:text-white">
-          Have Questions? Contact Us
+          {content("home.contact.heading", "Have Questions? Contact Us")}
         </h2>
         <form className="max-w-md mx-auto">
           <label htmlFor="contact-email" className="sr-only">
@@ -146,10 +182,10 @@ export default function HomePage() {
             className="w-full bg-white text-black border border-black px-6 py-3 rounded-full font-semibold hover:bg-black hover:text-white transition-colors"
             onClick={(e) => {
               e.preventDefault();
-              window.location.href = `mailto:arabrunningclub@gmail.com?subject=Question from Website&body=${encodeURIComponent(email)}`;
+              window.location.href = `mailto:${contactEmail}?subject=Question from Website&body=${encodeURIComponent(email)}`;
             }}
           >
-            Send to arabrunningclub@gmail.com
+            Send to {contactEmail}
           </button>
         </form>
       </div>
