@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import Layout from "@/components/layout";
 import { AnimatePresence, motion } from "framer-motion";
+import { CalendarDays, ChevronDown, ChevronRight, Instagram, MapPin, X } from "lucide-react";
+import { useSiteData } from "@/hooks/use-site-data";
+import {
+  eventPath,
+  formatDisplayCost,
+  resolveEventTheme,
+  type ArcEvent,
+  type ArcEventTheme,
+  type ArcMedia,
+} from "@/lib/site-data";
 
 type EventSlot = {
   id: string;
@@ -11,422 +21,142 @@ type EventSlot = {
   dateLabel: string;
   timeLabel: string;
   location: string;
-  mapUrl?: string;
   description: string;
-
-  // For upcoming events
   href: string;
   badge?: string;
   cost?: string;
-  registrationClosesAt?: string; // ISO w/ timezone
-
-  // Gallery + sorting
-  images?: string[];
-  startAt: string; // ISO w/ timezone
-  endAt: string; // ISO w/ timezone
-
-  // If you want “View full gallery” to scroll to a section on /gallery
-  galleryId?: string; // matches GalleryEvent.id on /gallery
+  images: string[];
+  startAt: string;
+  endAt: string;
+  galleryId?: string;
+  theme: ArcEventTheme;
 };
 
-const EVENTS: EventSlot[] = [
+const FALLBACK_EVENTS: EventSlot[] = [
   {
-    id: "pilates",
+    id: "pilates-2026",
     title: "Galentine’s Pilates @ Wayne State",
-    dateLabel: "Wed • Feb 21, 2026",
-    timeLabel: "11:30 AM – 12:30 PM • 1:00 PM – 2:00 PM",
+    dateLabel: "Sat, Feb 21, 2026",
+    timeLabel: "11:30 AM – 2:00 PM",
     startAt: "2026-02-21T11:30:00-05:00",
     endAt: "2026-02-21T14:00:00-05:00",
-    location: "Student Center • Dance Room 020",
+    location: "Student Center · Detroit, MI",
     cost: "$15",
-    images: [
-      "/images/pilates-1.jpg",
-      "/images/pilates-2.jpg",
-      "/images/pilates-3.jpg",
-      "/images/pilates-4.jpg",
-      "/images/pilates-5.JPG",
-      "/images/pilates-6.JPG",
-      "/images/pilates-7.JPG",
-      "/images/pilates-8.JPG",
-    ],
-    description:
-      "Beginner-friendly premium pilates experience. Drinks + snacks included. RSVP so we can plan mats, spacing, and the overall setup.",
-    href: "/pilates",
-    badge: "Open",
+    images: ["/images/pilates-1.jpg", "/images/pilates-2.jpg"],
+    description: "Beginner-friendly Pilates with drinks, snacks, and a welcoming community.",
+    href: "/events/galentines-pilates-2026",
+    badge: "Passed",
     galleryId: "galentines-pilates-2026",
-    
+    theme: resolveEventTheme(),
   },
   {
-    id: "ice",
+    id: "ice-2026",
     title: "Arabs On Ice",
-    dateLabel: "Sat • Jan 10, 2026",
+    dateLabel: "Sat, Jan 10, 2026",
     timeLabel: "6:00 PM – 8:00 PM",
     startAt: "2026-01-10T18:00:00-05:00",
     endAt: "2026-01-10T20:00:00-05:00",
-    location: "Campus Martius Rink",
+    location: "Campus Martius Rink · Detroit, MI",
     cost: "Varies",
-    images: [
-      "/images/iceskating.jpg",
-      "/images/iceskating1.JPG",
-      "/images/iceskating3.jpg",
-      "/images/iceskating4.jpg",
-    ],
-    description: "Ice skating + photos + vibes.",
-    href: "/events",
+    images: ["/images/iceskating.jpg", "/images/iceskating1.JPG"],
+    description: "Ice skating, photos, and community in the heart of Detroit.",
+    href: "/events/arabs-on-ice-2026",
     badge: "Passed",
     galleryId: "ice-skating-2026",
+    theme: resolveEventTheme(),
   },
   {
-  id: "pickleball",
-  title: "ARC Pickleball Meetup",
-  dateLabel: "Sat • June 6, 2026",
-  timeLabel: "6:00 PM – 9:00 PM",
-  startAt: "2026-06-06T18:00:00-04:00",
-  endAt: "2026-06-06T21:00:00-04:00",
-  registrationClosesAt: "2026-06-01T23:59:00-04:00",
-
-  location: "Crowley Park",
-  mapUrl: "https://maps.app.goo.gl/EUS3xE7742taSz8u7",
-
-  cost: "$5",
-
-  images: [
-    "/images/OUtenniscourts.jpg",
-    "/images/Pickleball.png",
-  ],
-
-  description:
-    "Join ARC for an evening of pickleball, movement, and community. All skill levels are welcome.",
-
-  href: "/pickleball",
-
-  badge: "Open",
-
-  galleryId: "june-pickleball-2026",
-},
-{
-  id: "Summer-2025",
-  title: "Summer 2025 Miscellaneous",
-  dateLabel: "Sat • June 30, 2025",
-  timeLabel: "6:00 PM – 9:00 PM",
-  startAt: "2025-06-30T18:00:00-04:00",
-  endAt: "2025-06-30T21:00:00-04:00",
-
-  location: "Various around Detroit",
-  mapUrl: "https://maps.app.goo.gl/EUS3xE7742taSz8u7",
-
-  cost: "Free",
-
-  images: [
-    "/images/oldarc2.1.jpeg",
-    "/images/oldarc3.jpeg",
-    "/images/oldarc14.jpeg",
-    "/images/oldarc13.jpeg",
-    "/images/oldarc6.jpeg",
-    "/images/oldarc7.jpeg",
-    "/images/oldarc8.jpeg",
-    "/images/oldarc9.2.png",
-    "/images/oldarc10.jpeg",
-    "/images/oldarc12.1.jpeg",
-  ],
-
-  description:
-    "Join ARC for an evening of pickleball, movement, and community. All skill levels are welcome.",
-
-  href: "/pickleball",
-
-  badge: "Open",
-
-  galleryId: "june-pickleball-2026",
-}
+    id: "pickleball-2026",
+    title: "ARC Pickleball Meetup",
+    dateLabel: "Sat, Jun 6, 2026",
+    timeLabel: "6:00 PM – 9:00 PM",
+    startAt: "2026-06-06T18:00:00-04:00",
+    endAt: "2026-06-06T21:00:00-04:00",
+    location: "Crowley Park · Dearborn, MI",
+    cost: "$5",
+    images: ["/images/OUtenniscourts.jpg", "/images/Pickleball.png"],
+    description: "An evening of pickleball, movement, and community for every skill level.",
+    href: "/events/pickleball-june-2026",
+    badge: "Passed",
+    galleryId: "june-pickleball-2026",
+    theme: resolveEventTheme(),
+  },
 ];
 
-const FALLBACK_IMAGES = [
-  "/images/pilates-1.jpeg",
-  "/images/pilates-2.jpg",
-  "/images/pilates-3.jpg",
-  "/images/pilates-4.jpg",
-];
-
-function classNames(...xs: Array<string | false | null | undefined>) {
-  return xs.filter(Boolean).join(" ");
+function classNames(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
 }
 
-function parseISO(s: string) {
-  const d = new Date(s);
-  return Number.isFinite(d.getTime()) ? d : null;
+function parseDate(value: string) {
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
 }
 
-type AmbientParticle = {
-  id: number;
-  left: string;
-  top: string;
-  size: number;
-  blur: number;
-  opacity: number;
-  duration: number;
-  delay: number;
-  driftX: number;
-  driftY: number;
-  color: "gray" | "red" | "green";
-};
+function sheetEventToSlot(
+  event: ArcEvent,
+  allMedia: ArcMedia[],
+  allThemes: ArcEventTheme[]
+): EventSlot {
+  const start = parseDate(event.startAt);
+  const end = parseDate(event.endAt);
+  const timeZone = event.timeZone || "America/Detroit";
+  const dateLabel = start
+    ? new Intl.DateTimeFormat("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone,
+      }).format(start)
+    : "Date to be announced";
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
+  const timeLabel = start && end
+    ? `${timeFormatter.format(start)} – ${timeFormatter.format(end)}`
+    : "Time to be announced";
+  const images = allMedia
+    .filter((item) => item.eventId === event.eventId)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((item) => item.imageUrl)
+    .filter(Boolean);
 
-function AmbientAtmosphere() {
-  const particles = useMemo<AmbientParticle[]>(() => {
-    return Array.from({ length: 30 }, (_, i) => {
-      const t = i + 1;
-
-      let color: AmbientParticle["color"] = "gray";
-      if (i % 4 === 0) color = "green";
-      else if (i % 7 === 0) color = "red";
-
-      return {
-        id: i,
-        left: `${(t * 37) % 100}%`,
-        top: `${6 + ((t * 19) % 88)}%`,
-        size: 2 + ((t * 7) % 7),
-        blur: i % 4 === 0 ? 2 : i % 4 === 1 ? 4 : 6,
-        opacity:
-          color === "green"
-            ? 0.1 + (i % 4) * 0.025
-            : color === "gray"
-              ? 0.16 + (i % 5) * 0.03
-              : 0.12 + (i % 4) * 0.03,
-        duration: 11 + (i % 7) * 2.4,
-        delay: (i % 5) * 0.7,
-        driftX: -14 + ((t * 11) % 28),
-        driftY: -10 + ((t * 13) % 20),
-        color,
-      };
-    });
-  }, []);
-
-  return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      {/* soft full-page atmosphere */}
-      <motion.div
-        aria-hidden
-        className="absolute inset-[-25%] blur-3xl"
-        style={{
-          background: `
-            radial-gradient(60% 80% at 50% 0%, rgba(189,196,207,0.45) 0%, rgba(189,196,207,0.12) 34%, rgba(189,196,207,0.04) 58%, rgba(0,0,0,0) 78%),
-            radial-gradient(42% 68% at 74% 4%, rgba(134,56,56,0.22) 0%, rgba(134,56,56,0.10) 36%, rgba(134,56,56,0.03) 60%, rgba(0,0,0,0) 80%),
-            radial-gradient(38% 60% at 18% 12%, rgba(128,132,138,0.16) 0%, rgba(128,132,138,0.08) 40%, rgba(0,0,0,0) 76%),
-            radial-gradient(34% 55% at 82% 72%, rgba(34,197,94,0.14) 0%, rgba(34,197,94,0.055) 42%, rgba(0,0,0,0) 76%),
-            radial-gradient(30% 42% at 12% 82%, rgba(22,163,74,0.10) 0%, rgba(22,163,74,0.04) 44%, rgba(0,0,0,0) 78%)
-          `,
-        }}
-        animate={{
-          opacity: [0.82, 1, 0.9, 0.98, 0.82],
-          scale: [1, 1.015, 1.01, 1.02, 1],
-        }}
-        transition={{
-          duration: 14,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-
-      {/* subtle top beam */}
-      <motion.div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-32 md:h-44 blur-2xl"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(192,198,210,0.14) 0%, rgba(142,70,70,0.08) 35%, rgba(34,197,94,0.055) 62%, rgba(0,0,0,0) 100%)",
-        }}
-        animate={{ opacity: [0.65, 0.85, 0.7, 0.65] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {/* lower-page color continuity */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-[14rem] bottom-0 opacity-60 blur-3xl"
-        style={{
-          background: `
-            radial-gradient(40% 30% at 18% 30%, rgba(120,120,120,0.08), rgba(0,0,0,0) 70%),
-            radial-gradient(34% 28% at 82% 44%, rgba(130,52,52,0.075), rgba(0,0,0,0) 72%),
-            radial-gradient(38% 34% at 52% 78%, rgba(34,197,94,0.075), rgba(0,0,0,0) 74%)
-          `,
-        }}
-      />
-
-      {/* floating particles */}
-      <div className="absolute inset-0">
-        {particles.map((p) => {
-          const baseColor =
-            p.color === "gray"
-              ? "rgba(202,208,214,0.9)"
-              : p.color === "green"
-                ? "rgba(74,170,105,0.8)"
-                : "rgba(142,74,74,0.9)";
-
-          return (
-            <motion.span
-              key={p.id}
-              aria-hidden
-              className="absolute rounded-full"
-              style={{
-                left: p.left,
-                top: p.top,
-                width: p.size,
-                height: p.size,
-                opacity: p.opacity,
-                filter: `blur(${p.blur}px)`,
-                background: baseColor,
-                boxShadow:
-                  p.color === "gray"
-                    ? "0 0 18px rgba(200,205,212,0.18)"
-                    : p.color === "green"
-                      ? "0 0 22px rgba(74,170,105,0.16)"
-                      : "0 0 18px rgba(145,72,72,0.14)",
-              }}
-             
-            />
-          );
-        })}
-      </div>
-
-      {/* vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 dark:to-black/20" />
-    </div>
-  );
-}
-function FloatingInstagram() {
-  return (
-    <motion.a
-      href="https://www.instagram.com/arabrec.club/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className={classNames(
-        "fixed z-[60] right-4 md:right-6 top-1/2 -translate-y-1/2",
-        "rounded-2xl border border-black/10 dark:border-white/10",
-        "bg-white/65 dark:bg-white/10 backdrop-blur",
-        "shadow-lg hover:shadow-xl transition",
-        "p-3 md:p-4"
-      )}
-      initial={{ opacity: 0, x: 10 }}
-      animate={{ opacity: 1, x: 0 }}
-      whileHover={{ scale: 1.04 }}
-      whileTap={{ scale: 0.98 }}
-      title="Instagram"
-    >
-      <img
-        src="/instagram.svg"
-        alt="Instagram"
-        className="h-10 w-10 md:h-12 md:w-12"
-        draggable={false}
-      />
-    </motion.a>
-  );
+  return {
+    id: event.eventId,
+    title: event.title,
+    dateLabel,
+    timeLabel,
+    startAt: event.startAt,
+    endAt: event.endAt,
+    location: [event.venue, event.cityState].filter(Boolean).join(" · "),
+    cost: formatDisplayCost(event.displayCost),
+    images: images.length ? images : event.heroImageUrl ? [event.heroImageUrl] : [],
+    description: event.cardDescription || event.fullDescription,
+    href: eventPath(event),
+    badge: event.cancellationStatus || (event.registrationEnabled ? "Open" : "Closed"),
+    galleryId: event.galleryId || undefined,
+    theme: resolveEventTheme(allThemes.find((item) => item.eventId === event.eventId)),
+  };
 }
 
-function Slideshow({ images, title }: { images: string[]; title: string }) {
-  const [idx, setIdx] = useState(0);
-  const count = images.length;
-
-  useEffect(() => setIdx(0), [images.join("|")]);
-
-  useEffect(() => {
-    if (count <= 1) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % count), 4200);
-    return () => clearInterval(t);
-  }, [count]);
-
-  const active = images[idx] ?? images[0];
-
-  return (
-    <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur p-3 shadow-sm">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-wider opacity-70">Gallery Preview</p>
-          <h3 className="text-base font-semibold truncate">{title}</h3>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setIdx((i) => (i - 1 + count) % count)}
-            disabled={count <= 1}
-            className={classNames(
-              "rounded-full border px-3 py-1 text-sm transition",
-              "border-black/10 dark:border-white/15",
-              count <= 1
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
-            )}
-            aria-label="Previous image"
-          >
-            ←
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIdx((i) => (i + 1) % count)}
-            disabled={count <= 1}
-            className={classNames(
-              "rounded-full border px-3 py-1 text-sm transition",
-              "border-black/10 dark:border-white/15",
-              count <= 1
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
-            )}
-            aria-label="Next image"
-          >
-            →
-          </button>
-        </div>
-      </div>
-
-      <div className="relative overflow-hidden rounded-2xl">
-        <div className="absolute left-3 top-3 z-10 rounded-full bg-black/55 px-3 py-1 text-xs text-white">
-          {idx + 1}/{count}
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={active}
-            src={active}
-            alt=""
-            className="h-[360px] sm:h-[420px] md:h-[520px] w-full object-cover"
-            loading="lazy"
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.99 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-          />
-        </AnimatePresence>
-      </div>
-
-      <div className="mt-3 grid grid-cols-6 gap-2">
-        {images.slice(0, 12).map((src, i) => (
-          <button
-            key={`${src}-${i}`}
-            type="button"
-            onClick={() => setIdx(i)}
-            className={classNames(
-              "overflow-hidden rounded-xl border transition",
-              i === idx
-                ? "border-black dark:border-white"
-                : "border-black/10 dark:border-white/10 hover:border-black/30 dark:hover:border-white/30"
-            )}
-            aria-label={`Select image ${i + 1}`}
-          >
-            <img
-              src={src}
-              alt=""
-              className={classNames(
-                "h-14 w-full object-cover transition-transform duration-300",
-                i === idx ? "scale-105" : "hover:scale-105"
-              )}
-              loading="lazy"
-            />
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+function eventThemeStyle(theme: ArcEventTheme) {
+  return {
+    "--card-bg-light": theme.lightCardBackground,
+    "--card-text-light": theme.lightCardText,
+    "--card-border-light": theme.lightCardBorder,
+    "--card-bg-dark": theme.darkCardBackground,
+    "--card-text-dark": theme.darkCardText,
+    "--card-border-dark": theme.darkCardBorder,
+    "--preview-bg-light": theme.lightPreviewBackground,
+    "--preview-text-light": theme.lightPreviewText,
+    "--preview-bg-dark": theme.darkPreviewBackground,
+    "--preview-text-dark": theme.darkPreviewText,
+    "--accent": theme.accentColor,
+    "--button-bg": theme.buttonBackground,
+    "--button-text": theme.buttonText,
+  } as CSSProperties;
 }
 
 function EventCard({
@@ -440,261 +170,251 @@ function EventCard({
   isPast: boolean;
   onSelect: () => void;
 }) {
-  const galleryHref = event.galleryId ? `/gallery#${event.galleryId}` : "/gallery";
-
   return (
-    <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.16 }} className="h-full">
+    <motion.article
+      layout
+      style={eventThemeStyle(event.theme)}
+      className={classNames(
+        "group flex h-full flex-col overflow-hidden rounded-2xl border bg-[var(--card-bg-light)] text-[var(--card-text-light)] shadow-sm transition",
+        "border-[var(--card-border-light)] dark:border-[var(--card-border-dark)] dark:bg-[var(--card-bg-dark)] dark:text-[var(--card-text-dark)]",
+        selected && "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-white dark:ring-offset-black"
+      )}
+    >
       <button
         type="button"
         onClick={onSelect}
-        className={classNames(
-          "w-full text-left rounded-2xl p-5 border transition",
-          "shadow-sm hover:shadow-md",
-          selected ? "border-black/40 dark:border-white/40" : "border-black/10 dark:border-white/10",
-          isPast ? "bg-white/60 dark:bg-white/5" : "bg-blue-700 text-white"
-        )}
+        aria-expanded={selected}
+        className="flex flex-1 flex-col p-5 text-left"
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className={classNames("text-xl font-bold leading-snug", isPast && "text-black dark:text-white")}>
-              {event.title}
-            </h3>
-            <p className={classNames("mt-1 text-sm", isPast ? "opacity-80" : "text-white/90")}>
-              {event.dateLabel}
+            <p className="text-xs font-bold uppercase tracking-[0.15em] opacity-55">
+              {isPast ? "Past event" : "Upcoming event"}
             </p>
-            <p className={classNames("text-sm", isPast ? "opacity-80" : "text-white/90")}>{event.timeLabel}</p>
-            <p className={classNames("mt-2 text-sm", isPast ? "opacity-80" : "text-white/90")}>{event.location}</p>
+            <h3 className="mt-2 text-xl font-bold leading-tight">{event.title}</h3>
           </div>
-
-          <div className="shrink-0 text-right">
-            <span
-              className={classNames(
-                "inline-block rounded-full px-3 py-1 text-xs font-semibold",
-                isPast ? "bg-black/5 dark:bg-white/10" : "bg-white/15"
-              )}
-            >
-              {isPast ? "Passed" : event.badge ?? "Open"}
-            </span>
-
-            {event.cost ? (
-              <div className={classNames("mt-2 text-xl font-semibold leading-tight", isPast && "text-black dark:text-white")}>
-                {event.cost}
-              </div>
-            ) : null}
-          </div>
+          <span className="rounded-full border border-current/15 px-3 py-1 text-xs font-bold opacity-75">
+            {isPast ? "Passed" : event.badge || "Open"}
+          </span>
         </div>
 
-        <div className="mt-4">
-          <p className={classNames("text-sm", isPast ? "opacity-80" : "text-white/95")}>{event.description}</p>
+        <div className="mt-5 space-y-2 text-sm opacity-80">
+          <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />{event.dateLabel} · {event.timeLabel}</p>
+          {event.location && <p className="flex items-center gap-2"><MapPin className="h-4 w-4" />{event.location}</p>}
         </div>
+        <p className="mt-4 line-clamp-3 text-sm leading-6 opacity-75">{event.description}</p>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {!isPast ? (
-            <Link
-              href={event.href}
-              onClick={(e) => e.stopPropagation()}
-              className={classNames(
-                "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold border transition",
-                "bg-white text-black border-white/30 hover:bg-black hover:text-white hover:border-black",
-                "dark:bg-black dark:text-white dark:border-white/30 dark:hover:bg-white dark:hover:text-black"
-              )}
-            >
-              View details / RSVP →
-            </Link>
-          ) : (
-            <Link
-              href={galleryHref}
-              onClick={(e) => e.stopPropagation()}
-              className={classNames(
-                "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold border transition",
-                "border-black/15 dark:border-white/15 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
-              )}
-            >
-              View full gallery
-            </Link>
-          )}
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+          <span className="text-xl font-black">{event.cost}</span>
+          <span className="inline-flex items-center gap-1 text-sm font-bold" style={{ color: event.theme.accentColor }}>
+            {selected ? "Hide preview" : "Preview"}<ChevronRight className={classNames("h-4 w-4 transition", selected && "rotate-90")} />
+          </span>
         </div>
       </button>
-    </motion.div>
+
+      <div className="flex flex-wrap gap-2 border-t border-current/10 px-5 py-4">
+        <Link
+          href={event.href}
+          className="rounded-full px-4 py-2 text-sm font-bold transition hover:brightness-110"
+          style={{ backgroundColor: event.theme.buttonBackground, color: event.theme.buttonText }}
+        >
+          {isPast ? "View event page" : "Details / RSVP"} →
+        </Link>
+        {event.galleryId && isPast && (
+          <Link href={`/gallery#${event.galleryId}`} className="rounded-full border border-current/20 px-4 py-2 text-sm font-bold">
+            Gallery
+          </Link>
+        )}
+      </div>
+    </motion.article>
+  );
+}
+
+function EventPreview({ event, onClose }: { event: EventSlot; onClose: () => void }) {
+  const [imageIndex, setImageIndex] = useState(0);
+
+  useEffect(() => setImageIndex(0), [event.id]);
+
+  return (
+    <motion.aside
+      key={event.id}
+      initial={{ opacity: 0, y: 18, x: 12 }}
+      animate={{ opacity: 1, y: 0, x: 0 }}
+      exit={{ opacity: 0, y: 12, x: 12 }}
+      transition={{ duration: 0.22 }}
+      style={eventThemeStyle(event.theme)}
+      className="overflow-hidden rounded-3xl border border-black/10 bg-[var(--preview-bg-light)] text-[var(--preview-text-light)] shadow-xl dark:border-white/10 dark:bg-[var(--preview-bg-dark)] dark:text-[var(--preview-text-dark)] lg:sticky lg:top-24"
+    >
+      <div className="flex items-start justify-between gap-4 p-5">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-55">Event preview</p>
+          <h2 className="mt-1 text-2xl font-black">{event.title}</h2>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close event preview" className="rounded-full border border-current/15 p-2 transition hover:bg-black/5 dark:hover:bg-white/10">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {event.images.length > 0 && (
+        <div className="px-5">
+          <div className="relative overflow-hidden rounded-2xl bg-black/5 dark:bg-white/5">
+            <img src={event.images[imageIndex]} alt={event.title} className="aspect-[4/3] w-full object-cover" />
+            <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-white">
+              {imageIndex + 1}/{event.images.length}
+            </span>
+          </div>
+          {event.images.length > 1 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {event.images.map((src, index) => (
+                <button
+                  key={`${src}-${index}`}
+                  type="button"
+                  onClick={() => setImageIndex(index)}
+                  className={classNames("shrink-0 overflow-hidden rounded-xl border-2", index === imageIndex ? "border-[var(--accent)]" : "border-transparent opacity-60")}
+                  aria-label={`Show photo ${index + 1}`}
+                >
+                  <img src={src} alt="" className="h-16 w-20 object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-4 p-5">
+        <p className="leading-7 opacity-80">{event.description}</p>
+        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="rounded-xl border border-current/10 p-3"><strong className="block">When</strong><span className="opacity-70">{event.dateLabel}<br />{event.timeLabel}</span></div>
+          <div className="rounded-xl border border-current/10 p-3"><strong className="block">Where</strong><span className="opacity-70">{event.location || "Coming soon"}</span></div>
+        </div>
+        <Link href={event.href} className="flex w-full items-center justify-center rounded-xl px-5 py-3 font-bold transition hover:brightness-110" style={{ backgroundColor: event.theme.buttonBackground, color: event.theme.buttonText }}>
+          Open full event page →
+        </Link>
+      </div>
+    </motion.aside>
+  );
+}
+
+function FloatingInstagram() {
+  return (
+    <a
+      href="https://www.instagram.com/arabrec.club/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="ARC on Instagram"
+      className="fixed bottom-5 right-5 z-40 grid h-12 w-12 place-items-center rounded-2xl border border-black/10 bg-white/75 text-black shadow-lg backdrop-blur-md transition hover:scale-105 dark:border-white/10 dark:bg-black/75 dark:text-white"
+    >
+      <Instagram className="h-5 w-5" />
+    </a>
   );
 }
 
 export default function EventsPage() {
-  const now = new Date();
+  const siteData = useSiteData();
+  const [now] = useState(() => new Date());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pastOpen, setPastOpen] = useState(true);
+  const events = useMemo(
+    () => siteData?.events?.length
+      ? siteData.events.map((event) => sheetEventToSlot(event, siteData.media || [], siteData.eventThemes || []))
+      : FALLBACK_EVENTS,
+    [siteData]
+  );
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
-    const withDates = EVENTS.map((e) => ({
-      e,
-      start: parseISO(e.startAt),
-      end: parseISO(e.endAt),
-    })).filter((x) => x.start && x.end) as Array<{ e: EventSlot; start: Date; end: Date }>;
-
-    const upcoming = withDates
-      .filter((x) => x.end >= now) // stays visible until end
-      .sort((a, b) => +a.start - +b.start)
-      .map((x) => x.e);
-
-    const past = withDates
-      .filter((x) => x.end < now)
-      .sort((a, b) => +b.start - +a.start)
-      .map((x) => x.e);
-
-    return { upcomingEvents: upcoming, pastEvents: past };
-  }, [now.getTime()]);
-
-  const [pastOpen, setPastOpen] = useState(true);
-
-  const initialSelected = upcomingEvents[0]?.id ?? pastEvents[0]?.id ?? EVENTS[0]?.id ?? "pilates";
-  const [selectedId, setSelectedId] = useState<string>(initialSelected);
-
-  // Keep selectedId valid (does NOT depend on pastOpen)
-  useEffect(() => {
-    const all = [...upcomingEvents, ...pastEvents];
-    if (!all.find((e) => e.id === selectedId)) setSelectedId(all[0]?.id ?? initialSelected);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [upcomingEvents.length, pastEvents.length]);
+    const dated = events.map((event) => ({ event, start: parseDate(event.startAt), end: parseDate(event.endAt) }));
+    return {
+      upcomingEvents: dated.filter((item) => item.end && item.end >= now).sort((a, b) => +(a.start || 0) - +(b.start || 0)).map((item) => item.event),
+      pastEvents: dated.filter((item) => item.end && item.end < now).sort((a, b) => +(b.start || 0) - +(a.start || 0)).map((item) => item.event),
+    };
+  }, [events, now]);
 
   const allEvents = useMemo(() => [...upcomingEvents, ...pastEvents], [upcomingEvents, pastEvents]);
+  const selectedEvent = selectedId ? allEvents.find((event) => event.id === selectedId) || null : null;
 
-  const selectedEvent =
-    allEvents.find((e) => e.id === selectedId) ?? upcomingEvents[0] ?? pastEvents[0] ?? EVENTS[0];
+  useEffect(() => {
+    if (selectedId && !allEvents.some((event) => event.id === selectedId)) setSelectedId(null);
+  }, [allEvents, selectedId]);
 
-  const galleryImages =
-    selectedEvent?.images && selectedEvent.images.length > 0 ? selectedEvent.images : FALLBACK_IMAGES;
+  const cardGrid = classNames(
+    "grid gap-4 sm:grid-cols-2",
+    selectedEvent ? "lg:grid-cols-1 xl:grid-cols-2" : "xl:grid-cols-3"
+  );
 
   return (
     <Layout>
       <FloatingInstagram />
-
-      <main className="relative isolate min-h-screen overflow-x-clip bg-white text-black dark:bg-black dark:text-white transition-colors">
-        <AmbientAtmosphere />
-
-        {/* content wrapper stays above ambience */}
-        <div className="relative z-10">
-          {/* extra top padding so navbar doesn’t cut the title */}
-          <section className="pt-24 md:pt-28 pb-10">
-            <div className="container mx-auto px-4">
-              <h1 className="text-4xl md:text-6xl font-bold">Events</h1>
-              <p className="mt-3 text-lg md:text-2xl opacity-90">
-                Find our latest events here
-              </p>
-              <p className="mt-3 text-bg opacity-70">
-                Don’t see an event yet? Follow{" "}
-                <Link
-                  href="https://www.instagram.com/arabrec.club/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold underline"
-                >
-                  Instagram
-                </Link>{" "}
-                for updates.
-              </p>
+      <main className="min-h-screen bg-white pt-20 text-black transition-colors dark:bg-black dark:text-white">
+        <section className="border-b border-black/10 py-12 dark:border-white/10 md:py-16">
+          <div className="container mx-auto px-4">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] opacity-50">Arab Recreational Club</p>
+            <h1 className="mt-2 text-5xl font-black tracking-tight md:text-7xl">Events</h1>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+              <p className="max-w-2xl text-lg opacity-70 md:text-xl">Choose an event to reveal its photos and preview. Your list stays clean until you do.</p>
+              <Link href="https://www.instagram.com/arabrec.club/" target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-4">Follow Instagram</Link>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="pb-20">
-            <div className="container mx-auto px-4">
-              <div className="grid gap-10 md:grid-cols-[1fr_420px] lg:grid-cols-[1fr_520px] items-start">
-                <div className="md:order-2">
-                  <div className="md:sticky md:top-24">
-                    <Slideshow images={galleryImages} title={selectedEvent?.title ?? "Gallery"} />
-                  </div>
+        <section className="container mx-auto px-4 py-10 md:py-14">
+          <div className={classNames("grid items-start gap-8", selectedEvent && "lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]")}>
+            <div className="min-w-0 space-y-12">
+              <section>
+                <div className="mb-5 flex items-end justify-between gap-4">
+                  <div><p className="text-xs font-bold uppercase tracking-[0.16em] opacity-50">Happening next</p><h2 className="mt-1 text-3xl font-black">Upcoming</h2></div>
+                  <span className="text-sm opacity-55">{upcomingEvents.length} {upcomingEvents.length === 1 ? "event" : "events"}</span>
                 </div>
-
-                <div className="md:order-1">
-                  {/* Upcoming */}
-                  <div className="mb-10">
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <h2 className="text-2xl font-bold">Upcoming</h2>
-                      <span className="text-sm opacity-70">
-                        {upcomingEvents.length} {upcomingEvents.length === 1 ? "event" : "events"}
-                      </span>
-                    </div>
-
-                    {upcomingEvents.length === 0 ? (
-                      <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
-                        <p className="text-lg font-semibold">No upcoming events.</p>
-                        <p className="mt-2 opacity-75">Check back soon — new slots will appear here.</p>
-                      </div>
-                    ) : (
-                      <div className="grid gap-4">
-                        {upcomingEvents.map((e) => (
-                          <EventCard
-                            key={e.id}
-                            event={e}
-                            isPast={false}
-                            selected={selectedId === e.id}
-                            onSelect={() => setSelectedId(e.id)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Past (arrow toggle + collapse animation) */}
-                  <div className="flex items-center justify-between gap-4 mb-4">
-                    <button
-                      type="button"
-                      onClick={() => setPastOpen((v) => !v)}
-                      className="group inline-flex items-center gap-2"
-                      aria-expanded={pastOpen}
-                      aria-controls="past-events"
-                    >
-                      <h2 className="text-2xl font-bold">Past</h2>
-
-                      <motion.span
-                        animate={{ rotate: pastOpen ? 90 : 0 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-black/10 dark:border-white/10
-                                   opacity-80 group-hover:opacity-100 transition"
-                        title={pastOpen ? "Collapse past events" : "Expand past events"}
-                      >
-                        <span className="text-sm">›</span>
-                      </motion.span>
-                    </button>
-
-                    <span className="text-sm opacity-70">
-                      {pastEvents.length} {pastEvents.length === 1 ? "event" : "events"}
-                    </span>
-                  </div>
-
-                  <AnimatePresence initial={false}>
-                    {pastOpen && (
-                      <motion.div
-                        id="past-events"
-                        key="past-events"
-                        initial={{ height: 0, opacity: 0, y: -10 }}
-                        animate={{ height: "auto", opacity: 1, y: 0 }}
-                        exit={{ height: 0, opacity: 0, y: -10 }}
-                        transition={{ duration: 0.28, ease: "easeInOut" }}
-                        className="overflow-visible"
-                      >
-                        {pastEvents.length === 0 ? (
-                          <div className="rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center">
-                            <p className="opacity-75">No past events listed yet.</p>
-                          </div>
-                        ) : (
-                          <div className="grid gap-4">
-                            {pastEvents.map((e) => (
-                              <EventCard
-                                key={e.id}
-                                event={e}
-                                isPast={true}
-                                selected={selectedId === e.id}
-                                onSelect={() => setSelectedId(e.id)}
-                              />
-                            ))}
+                {upcomingEvents.length ? (
+                  <div className={cardGrid}>
+                    {upcomingEvents.map((event) => (
+                      <Fragment key={event.id}>
+                        <EventCard event={event} isPast={false} selected={selectedId === event.id} onSelect={() => setSelectedId(selectedId === event.id ? null : event.id)} />
+                        {selectedId === event.id && (
+                          <div className="sm:col-span-2 lg:hidden">
+                            <EventPreview event={event} onClose={() => setSelectedId(null)} />
                           </div>
                         )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+                      </Fragment>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-black/10 p-8 text-center dark:border-white/10"><p className="text-lg font-bold">No upcoming events yet.</p><p className="mt-2 opacity-65">New dates will appear here when they are published.</p></div>
+                )}
+              </section>
+
+              <section>
+                <button type="button" onClick={() => setPastOpen((value) => !value)} className="mb-5 flex w-full items-end justify-between gap-4 text-left" aria-expanded={pastOpen}>
+                  <div><p className="text-xs font-bold uppercase tracking-[0.16em] opacity-50">Archive</p><h2 className="mt-1 flex items-center gap-2 text-3xl font-black">Past events <ChevronDown className={classNames("h-6 w-6 transition", !pastOpen && "-rotate-90")} /></h2></div>
+                  <span className="text-sm opacity-55">{pastEvents.length} {pastEvents.length === 1 ? "event" : "events"}</span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {pastOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className={cardGrid}>
+                        {pastEvents.map((event) => (
+                          <Fragment key={event.id}>
+                            <EventCard event={event} isPast selected={selectedId === event.id} onSelect={() => setSelectedId(selectedId === event.id ? null : event.id)} />
+                            {selectedId === event.id && (
+                              <div className="sm:col-span-2 lg:hidden">
+                                <EventPreview event={event} onClose={() => setSelectedId(null)} />
+                              </div>
+                            )}
+                          </Fragment>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
             </div>
-          </section>
-        </div>
+
+            <div className="hidden lg:block">
+              <AnimatePresence mode="wait">
+                {selectedEvent && <EventPreview event={selectedEvent} onClose={() => setSelectedId(null)} />}
+              </AnimatePresence>
+            </div>
+          </div>
+        </section>
       </main>
     </Layout>
   );

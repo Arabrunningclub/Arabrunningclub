@@ -4,6 +4,7 @@ import Layout from "@/components/layout";
 import { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSiteData } from '@/hooks/use-site-data';
 
 
 
@@ -78,16 +79,25 @@ function PhotoGrid({ photos }: { photos: string[] }) {
 }
 
 function DonationsClient() {
+  const siteData = useSiteData();
   const params = useSearchParams();
   const status = params.get('status'); // "success" | "cancel" | null
 
   const [amount, setAmount] = useState<number>(20);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const presets = Array.isArray(siteData?.settings?.['donation.presets'])
+    ? (siteData?.settings?.['donation.presets'] as unknown[]).map(Number).filter(Number.isFinite)
+    : PRESETS;
+  const minimum = Number(siteData?.settings?.['donation.minimum'] ?? 1);
+  const maximum = Number(siteData?.settings?.['donation.maximum'] ?? 50000);
+  const heading = siteData?.content?.['donations.heading']?.value || 'Support Our Mission';
+  const intro = siteData?.content?.['donations.body']?.value ||
+    'Your contributions help us organize community events, support charitable causes, and keep ARC growing.';
 
   const isValid = useMemo(
-    () => Number.isFinite(amount) && amount >= 1 && amount <= 50000,
-    [amount]
+    () => Number.isFinite(amount) && amount >= minimum && amount <= maximum,
+    [amount, minimum, maximum]
   );
 
   const mid = Math.ceil(DONATION_PHOTOS.length / 2);
@@ -97,7 +107,7 @@ function DonationsClient() {
   async function startCheckout() {
     setErr(null);
     if (!isValid) {
-      setErr('Enter an amount between $1 and $50,000.');
+      setErr(`Enter an amount between ${formatUSD(minimum)} and ${formatUSD(maximum)}.`);
       return;
     }
     try {
@@ -135,9 +145,9 @@ function DonationsClient() {
       {/* Header (pushed down so navbar doesn’t cut it) */}
       <section className="relative pt-28 md:pt-32 pb-10 text-center">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-bold">Support Our Mission</h1>
+          <h1 className="text-4xl md:text-6xl font-bold">{heading}</h1>
           <p className="mt-4 text-lg md:text-2xl opacity-90 max-w-4xl mx-auto">
-            Your contributions help us organize community events, support charitable causes, and keep ARC growing.
+            {intro}
           </p>
         </div>
       </section>
@@ -207,7 +217,7 @@ function DonationsClient() {
                 </p>
 
                 <div className="mb-4 flex flex-wrap justify-center gap-2">
-                  {PRESETS.map((p) => {
+                  {presets.map((p) => {
                     const active = amount === p;
                     return (
                       <button
@@ -238,8 +248,8 @@ function DonationsClient() {
                   <input
                     type="number"
                     inputMode="decimal"
-                    min={1}
-                    max={50000}
+                    min={minimum}
+                    max={maximum}
                     step="1"
                     value={Number.isFinite(amount) ? amount : ''}
                     onChange={(e) => {
