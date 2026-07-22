@@ -11,6 +11,10 @@ function getStripe() {
 }
 
 function getAppsScriptUrl(eventKey: string) {
+  if (process.env.APPS_SCRIPT_WEB_APP_URL) {
+    return process.env.APPS_SCRIPT_WEB_APP_URL;
+  }
+
   const map: Record<string, string | undefined> = {
     pilates: process.env.APPS_SCRIPT_WEB_APP_URL_PILATES,
     pickleball: process.env.APPS_SCRIPT_WEB_APP_URL_PICKLEBALL,
@@ -35,8 +39,13 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await req.arrayBuffer());
     const event = stripe.webhooks.constructEvent(buf, sig, whSecret);
 
-    if (event.type === "checkout.session.completed") {
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.expired") {
       const session = event.data.object as Stripe.Checkout.Session;
+      const expired = event.type === "checkout.session.expired";
+
+      if (!expired && session.payment_status !== "paid") {
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
 
       const rsvpId =
         session.metadata?.rsvpId ||
@@ -71,8 +80,14 @@ export async function POST(req: NextRequest) {
           action: "payment_update",
           secret,
           rsvpId,
-          paymentStatus: "PAID",
+          paymentStatus: expired ? "Expired" : "Paid",
+          registrationStatus: expired ? "Canceled" : undefined,
           stripeSessionId: session.id,
+          onlyIfCurrentStripeSession: true,
+          amountPaid:
+            !expired && typeof session.amount_total === "number"
+              ? session.amount_total / 100
+              : undefined,
         }),
       });
 
@@ -83,7 +98,7 @@ export async function POST(req: NextRequest) {
         throw new Error("payment_update failed");
       }
 
-      console.log("Marked PAID in sheet", {
+      console.log(expired ? "Released expired RSVP in sheet" : "Marked paid in sheet", {
         eventKey,
         rsvpId,
         sessionId: session.id,
