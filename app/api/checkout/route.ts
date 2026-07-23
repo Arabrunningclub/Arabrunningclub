@@ -69,11 +69,38 @@ async function attachCheckoutToRsvp(rsvpId: string, stripeSessionId: string, exp
   }
 }
 
+async function getCheckoutDetails(rsvpId: string, eventId: string, sessionId: string) {
+  const appsUrl = getAppsScriptUrl();
+  const secret = process.env.APPS_SCRIPT_WRITE_SECRET || process.env.APPS_SCRIPT_MARKPAID_SECRET;
+  if (!appsUrl || !secret) throw new Error("Registration payment validation is not configured");
+
+  const response = await fetch(appsUrl, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "checkout_details",
+      secret,
+      rsvpId,
+      eventId,
+      sessionId,
+    }),
+    cache: "no-store",
+    redirect: "follow",
+  });
+  const result = await response.json().catch(() => ({ ok: false }));
+  if (!response.ok || !result?.ok) {
+    throw new Error(result?.error || "This registration is not eligible for checkout");
+  }
+  return {
+    email: typeof result.email === "string" ? result.email : undefined,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
 
-    const { rsvpId, email, returnPath, eventId, sessionId } = await req.json();
+    const { rsvpId, returnPath, eventId, sessionId } = await req.json();
 
     const rid = String(rsvpId || "").trim();
 
@@ -95,6 +122,7 @@ export async function POST(req: NextRequest) {
     if (!eventSession.paymentMethods.includes("Card")) {
       return NextResponse.json({ error: "Online payment is not enabled for this session" }, { status: 400 });
     }
+    const checkoutDetails = await getCheckoutDetails(rid, cleanEventId, cleanSessionId);
 
     const dollars = Number(eventSession.cardPrice);
     if (!Number.isFinite(dollars) || dollars <= 0) {
@@ -129,7 +157,7 @@ export async function POST(req: NextRequest) {
         returnPath: cleanPath,
         eventKey: cleanEventKey,
       },
-      customer_email: typeof email === "string" ? email : undefined,
+      customer_email: checkoutDetails.email,
       line_items: [
         {
           price_data: {

@@ -13,6 +13,7 @@ const TABS = Object.freeze({
 const CARD_PAYMENT_TIMEOUT_MS = 30 * 60 * 1000;
 const EVENT_MESSAGE_TRIGGER = Object.freeze({
   confirmation: "Confirmation", reminder: "Reminder", reschedule: "Reschedule",
+  offWaitlist: "Off Waitlist",
 });
 const MAX_EMAILS_PER_RUN = 50;
 
@@ -36,6 +37,9 @@ function doPost(e) {
     requireSecret_(body.secret);
     if (body.action === "rsvp") return json_(createRsvp_(body));
     if (body.action === "payment_update") return json_(updatePayment_(body));
+    if (body.action === "checkout_details") return json_(checkoutDetails_(body));
+    if (body.action === "check_in") return json_(checkInRsvp_(body));
+    if (body.action === "checkin_list") return json_(checkinList_(body));
     return json_({ ok: false, error: "Unknown action" });
   } catch (error) {
     console.error(error);
@@ -124,9 +128,16 @@ function getAvailability_(eventId) {
   const sessions = rows_(TABS.sessions).filter((row) => text_(row["Event ID"]) === eventId).map((row) => {
     const sessionId = text_(row["Session ID"]);
     const capacity = number_(row.Capacity);
-    const registered = rsvps.filter((rsvp) => text_(rsvp["Session ID"]) === sessionId).length;
-    return { sessionId, capacity, registered, left: capacity > 0 ? Math.max(0, capacity - registered) : null,
-      full: capacity > 0 && registered >= capacity, registrationStatus: text_(row["Registration Status"]) };
+    const sessionRsvps = rsvps.filter((rsvp) => text_(rsvp["Session ID"]) === sessionId);
+    const registered = sessionRsvps.filter((rsvp) =>
+      text_(rsvp["Registration Status"]) === "Confirmed").length;
+    const waitlisted = sessionRsvps.filter((rsvp) =>
+      text_(rsvp["Registration Status"]) === "Waitlisted").length;
+    const queueOnly = text_(row["Registration Status"]) === "Waitlist";
+    const full = queueOnly || (capacity > 0 && (registered >= capacity || waitlisted > 0));
+    return { sessionId, capacity, registered, waitlisted,
+      left: capacity > 0 ? (full ? 0 : Math.max(0, capacity - registered)) : null,
+      full, registrationStatus: text_(row["Registration Status"]) };
   });
   return { ok: true, eventId, sessions };
 }
@@ -160,23 +171,29 @@ function createRsvp_(body) {
       text_(row["Event ID"]) === eventId && text_(row["Session ID"]) === sessionId &&
       isActiveRsvp_(row));
     const capacity = number_(session.Capacity);
-    const isFull = capacity > 0 && existing.length >= capacity;
-    if (isFull && event["Waitlist Enabled"] !== "Yes") throw new Error("This session is full");
+    const confirmedCount = existing.filter((row) =>
+      text_(row["Registration Status"]) === "Confirmed").length;
+    const waitlisted = existing.filter((row) =>
+      text_(row["Registration Status"]) === "Waitlisted");
+    const shouldWaitlist = text_(session["Registration Status"]) === "Waitlist" ||
+      (capacity > 0 && (confirmedCount >= capacity || waitlisted.length > 0));
+    if (shouldWaitlist && event["Waitlist Enabled"] !== "Yes") throw new Error("This session is full");
 
-    const registrationStatus = isFull ? "Waitlisted" : "Confirmed";
+    const registrationStatus = shouldWaitlist ? "Waitlisted" : "Confirmed";
     const paymentMethod = text_(body.paymentMethod || "None");
     const amountDue = paymentMethod === "Card" ? number_(session["Card Price"]) : number_(session["Pay Later Price"]);
-    const paymentStatus = amountDue > 0 ? "Pending" : "Not Required";
+    const paymentStatus = registrationStatus === "Waitlisted" && amountDue > 0
+      ? "Awaiting Spot"
+      : amountDue > 0 ? "Pending" : "Not Required";
     const rsvpId = Utilities.getUuid();
-    const waitlistPosition = isFull
-      ? existing.filter((row) => text_(row["Registration Status"]) === "Waitlisted").length + 1 : "";
+    const waitlistPosition = shouldWaitlist ? waitlisted.length + 1 : "";
 
     const rsvpSheet = sheet_(TABS.rsvps);
     rsvpSheet.appendRow([rsvpId, eventId, sessionId, new Date(), fullName, email, phone,
       registrationStatus, paymentStatus, paymentMethod, amountDue, 0, "", "No", "", waitlistPosition,
       "No", "No", text_(body.adminNotes)]);
     let paymentExpiresAt = "";
-    if (paymentMethod === "Card" && amountDue > 0) {
+    if (registrationStatus === "Confirmed" && paymentMethod === "Card" && amountDue > 0) {
       const headers = rsvpSheet.getRange(1, 1, 1, rsvpSheet.getLastColumn()).getValues()[0].map(text_);
       ensureHeader_(rsvpSheet, headers, "Payment Deadline");
       const deadline = new Date(Date.now() + CARD_PAYMENT_TIMEOUT_MS);
@@ -198,6 +215,18 @@ function updatePayment_(body) {
   const idCol = headers.indexOf("RSVP ID");
   const rowIndex = values.findIndex((row, index) => index > 0 && text_(row[idCol]) === rsvpId);
   if (rowIndex < 0) throw new Error("RSVP not found");
+  const eventIdCol = headers.indexOf("Event ID");
+  const sessionIdCol = headers.indexOf("Session ID");
+  const registrationCol = headers.indexOf("Registration Status");
+  if (body.eventId && text_(values[rowIndex][eventIdCol]) !== text_(body.eventId)) {
+    throw new Error("RSVP event does not match");
+  }
+  if (body.sessionId && text_(values[rowIndex][sessionIdCol]) !== text_(body.sessionId)) {
+    throw new Error("RSVP session does not match");
+  }
+  if (body.onlyIfConfirmed === true && text_(values[rowIndex][registrationCol]) !== "Confirmed") {
+    throw new Error("This registration is not confirmed");
+  }
   const incomingStripeSessionId = text_(body.stripeSessionId);
   const stripeSessionCol = headers.indexOf("Stripe Session ID");
   const currentStripeSessionId = stripeSessionCol >= 0 ? text_(values[rowIndex][stripeSessionCol]) : "";
@@ -224,12 +253,132 @@ function updatePayment_(body) {
     setByHeader_(sheet, headers, rowIndex + 1, "Payment Deadline", "");
   }
   if (body.amountPaid !== undefined) setByHeader_(sheet, headers, rowIndex + 1, "Amount Paid", number_(body.amountPaid));
-  if (text_(body.paymentStatus) === "Paid") trySendConfirmation_(rsvpId);
+  if (text_(body.paymentStatus) === "Paid" || body.paymentMethod) trySendConfirmation_(rsvpId);
   return {
     ok: true,
     rsvpId,
     paymentMethod: body.paymentMethod ? text_(body.paymentMethod) : undefined,
     amountDue: body.amountDue !== undefined ? number_(body.amountDue) : undefined,
+  };
+}
+
+function checkoutDetails_(body) {
+  const rsvpId = requiredText_(body.rsvpId, "rsvpId");
+  const rsvp = rows_(TABS.rsvps).find((row) => text_(row["RSVP ID"]) === rsvpId);
+  if (!rsvp) throw new Error("RSVP not found");
+  if (body.eventId && text_(rsvp["Event ID"]) !== text_(body.eventId)) {
+    throw new Error("RSVP event does not match");
+  }
+  if (body.sessionId && text_(rsvp["Session ID"]) !== text_(body.sessionId)) {
+    throw new Error("RSVP session does not match");
+  }
+  if (text_(rsvp["Registration Status"]) !== "Confirmed") {
+    throw new Error("A confirmed spot is required before checkout");
+  }
+  if (text_(rsvp["Payment Method"]) !== "Card") {
+    throw new Error("This RSVP is not using card payment");
+  }
+  if (text_(rsvp["Payment Status"]) === "Paid") {
+    throw new Error("This RSVP is already paid");
+  }
+  if (!isActiveRsvp_(rsvp)) {
+    throw new Error("This payment window has expired");
+  }
+  return {
+    ok: true,
+    rsvpId,
+    eventId: text_(rsvp["Event ID"]),
+    sessionId: text_(rsvp["Session ID"]),
+    email: text_(rsvp.Email),
+  };
+}
+
+function checkInRsvp_(body) {
+  const rsvpId = requiredText_(body.rsvpId, "rsvpId");
+  const eventId = requiredText_(body.eventId, "eventId");
+  const sessionId = requiredText_(body.sessionId, "sessionId");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const rsvpSheet = sheet_(TABS.rsvps);
+    const values = rsvpSheet.getDataRange().getValues();
+    const headers = values[0].map(text_);
+    ensureHeader_(rsvpSheet, headers, "Checked In At");
+    const idCol = headers.indexOf("RSVP ID");
+    const rowIndex = values.findIndex((row, index) =>
+      index > 0 && text_(row[idCol]) === rsvpId);
+    if (rowIndex < 0) throw new Error("Registration not found");
+    const row = {};
+    headers.forEach((header, column) => { row[header] = values[rowIndex][column]; });
+    if (text_(row["Event ID"]) !== eventId || text_(row["Session ID"]) !== sessionId) {
+      throw new Error("Registration does not match this event");
+    }
+    if (text_(row["Registration Status"]) !== "Confirmed" || !isActiveRsvp_(row)) {
+      throw new Error("This registration is not eligible for check-in");
+    }
+
+    const session = rows_(TABS.sessions).find((item) =>
+      text_(item["Event ID"]) === eventId && text_(item["Session ID"]) === sessionId);
+    if (!session) throw new Error("Event session not found");
+    const startsAt = date_(session["Start At"]);
+    const endsAt = date_(session["End At"] || session["Start At"]);
+    const now = new Date();
+    const opensAt = startsAt ? startsAt.getTime() - 3 * 60 * 60 * 1000 : 0;
+    const closesAt = endsAt ? endsAt.getTime() + 12 * 60 * 60 * 1000 : Number.MAX_SAFE_INTEGER;
+    if (now.getTime() < opensAt) throw new Error("Check-in opens three hours before the event");
+    if (now.getTime() > closesAt) throw new Error("Check-in is closed for this event");
+
+    if (text_(row["Checked In"]) === "Yes") {
+      return {
+        ok: true,
+        alreadyCheckedIn: true,
+        checkedInAt: iso_(row["Checked In At"]),
+        name: text_(row["Full Name"]),
+      };
+    }
+
+    setByHeader_(rsvpSheet, headers, rowIndex + 1, "Checked In", "Yes");
+    setByHeader_(rsvpSheet, headers, rowIndex + 1, "Checked In At", now);
+    return {
+      ok: true,
+      alreadyCheckedIn: false,
+      checkedInAt: now.toISOString(),
+      name: text_(row["Full Name"]),
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function checkinList_(body) {
+  const eventId = requiredText_(body.eventId, "eventId");
+  const sessionId = text_(body.sessionId);
+  const attendees = rows_(TABS.rsvps)
+    .filter((row) => text_(row["Event ID"]) === eventId)
+    .filter((row) => !sessionId || text_(row["Session ID"]) === sessionId)
+    .filter((row) => text_(row["Registration Status"]) === "Confirmed" && isActiveRsvp_(row))
+    .map((row) => ({
+      rsvpId: text_(row["RSVP ID"]),
+      sessionId: text_(row["Session ID"]),
+      fullName: text_(row["Full Name"]),
+      checkedIn: text_(row["Checked In"]) === "Yes",
+      checkedInAt: iso_(row["Checked In At"]),
+      paymentStatus: text_(row["Payment Status"]),
+      paymentMethod: text_(row["Payment Method"]),
+    }))
+    .sort((a, b) => {
+      if (a.checkedIn !== b.checkedIn) return a.checkedIn ? -1 : 1;
+      if (a.checkedInAt !== b.checkedInAt) return b.checkedInAt.localeCompare(a.checkedInAt);
+      return a.fullName.localeCompare(b.fullName);
+    });
+  return {
+    ok: true,
+    eventId,
+    sessionId,
+    totalConfirmed: attendees.length,
+    checkedIn: attendees.filter((attendee) => attendee.checkedIn).length,
+    attendees,
   };
 }
 
@@ -251,7 +400,7 @@ function setupEventMessaging() {
   runEventMessaging();
 }
 
-/** Trigger handler: catches up confirmations and sends every due reminder row. */
+/** Trigger handler: catches up confirmations, reminders, and expired card holds. */
 function runEventMessaging() {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -260,8 +409,9 @@ function runEventMessaging() {
     const messages = rows_(TABS.messages).filter((row) => text_(row.Enabled) === "Yes");
     const events = rows_(TABS.events);
     const sessions = rows_(TABS.sessions);
+    promoteWaitlistedRsvps_(sessions, events, messages);
     const rsvps = rows_(TABS.rsvps);
-    let sent = processScheduleChanges_(messages, events, sessions, rsvps);
+    let sent = 0;
     syncEventScheduleRows_(events, sessions);
 
     for (const rsvp of rsvps) {
@@ -271,16 +421,25 @@ function runEventMessaging() {
       const session = sessions.find((row) => text_(row["Session ID"]) === text_(rsvp["Session ID"]));
       if (!event || !session) continue;
 
-      for (const message of messagesForRsvp_(messages, rsvp)) {
+      const matchingMessages = messagesForRsvp_(messages, rsvp);
+      const hasOffWaitlistMessage = matchingMessages.some((message) =>
+        text_(message["Message Type"]) === EVENT_MESSAGE_TRIGGER.offWaitlist);
+      for (const message of matchingMessages) {
         if (sent >= MAX_EMAILS_PER_RUN || MailApp.getRemainingDailyQuota() <= 0) break;
         const type = text_(message["Message Type"]);
-        if (![EVENT_MESSAGE_TRIGGER.confirmation, EVENT_MESSAGE_TRIGGER.reminder].includes(type)) continue;
-        if (type === EVENT_MESSAGE_TRIGGER.confirmation && !isConfirmationReady_(rsvp)) continue;
+        if (![EVENT_MESSAGE_TRIGGER.confirmation, EVENT_MESSAGE_TRIGGER.reminder,
+          EVENT_MESSAGE_TRIGGER.offWaitlist].includes(type)) continue;
+        if (type === EVENT_MESSAGE_TRIGGER.confirmation &&
+            (!isConfirmationReady_(rsvp) ||
+             (date_(rsvp["Waitlist Promoted At"]) && hasOffWaitlistMessage))) continue;
         if (type === EVENT_MESSAGE_TRIGGER.reminder &&
             (!isConfirmationReady_(rsvp) || !isReminderDue_(message, session))) continue;
+        if (type === EVENT_MESSAGE_TRIGGER.offWaitlist && !date_(rsvp["Waitlist Promoted At"])) continue;
         try {
           const deliveryKey = type === EVENT_MESSAGE_TRIGGER.reminder
             ? `${text_(message["Message ID"])}|${iso_(session["Start At"])}|${iso_(session["End At"])}`
+            : type === EVENT_MESSAGE_TRIGGER.offWaitlist
+              ? `${text_(message["Message ID"])}|${iso_(rsvp["Waitlist Promoted At"])}`
             : text_(message["Message ID"]);
           if (sendEventMessage_(message, rsvp, event, session, deliveryKey)) sent += 1;
         } catch (error) {
@@ -288,6 +447,43 @@ function runEventMessaging() {
         }
       }
     }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Manual spreadsheet button handler for publishing schedule changes. */
+function sendRescheduleUpdates() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const messages = rows_(TABS.messages)
+      .filter((row) => text_(row.Enabled) === "Yes");
+
+    const events = rows_(TABS.events);
+    const sessions = rows_(TABS.sessions);
+    const rsvps = rows_(TABS.rsvps);
+
+    const sent = processScheduleChanges_(
+      messages,
+      events,
+      sessions,
+      rsvps
+    );
+
+    const spreadsheetId =
+      PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
+
+    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+
+    spreadsheet.toast(
+      sent > 0
+        ? `${sent} reschedule email${sent === 1 ? "" : "s"} sent.`
+        : "No unsent schedule changes were found.",
+      "ARC Messaging",
+      6
+    );
   } finally {
     lock.releaseLock();
   }
@@ -318,6 +514,98 @@ function expireUnpaidCardHolds_() {
     expired += 1;
   }
   return expired;
+}
+
+function promoteWaitlistedRsvps_(sessions, events, messages) {
+  const rsvpSheet = sheet_(TABS.rsvps);
+  const values = rsvpSheet.getDataRange().getValues();
+  if (values.length < 2) return 0;
+  const headers = values[0].map(text_);
+  ensureHeader_(rsvpSheet, headers, "Payment Deadline");
+  ensureHeader_(rsvpSheet, headers, "Waitlist Promoted At");
+  const eventCol = headers.indexOf("Event ID");
+  const sessionCol = headers.indexOf("Session ID");
+  const statusCol = headers.indexOf("Registration Status");
+  const paymentCol = headers.indexOf("Payment Status");
+  const methodCol = headers.indexOf("Payment Method");
+  const amountCol = headers.indexOf("Amount Due");
+  const positionCol = headers.indexOf("Waitlist Position");
+  const deadlineCol = headers.indexOf("Payment Deadline");
+  const promotedCol = headers.indexOf("Waitlist Promoted At");
+  const submittedCol = headers.indexOf("Submitted At");
+  let promoted = 0;
+
+  const entries = values.slice(1).map((row, index) => {
+    const record = {};
+    headers.forEach((header, column) => { record[header] = row[column]; });
+    return { row, record, sheetRow: index + 2 };
+  });
+
+  for (const session of sessions) {
+    const capacity = number_(session.Capacity);
+    if (capacity <= 0) continue;
+    const eventId = text_(session["Event ID"]);
+    const sessionId = text_(session["Session ID"]);
+    const event = events.find((row) => text_(row["Event ID"]) === eventId);
+    const hasPromotionMessage = messages.some((message) =>
+      text_(message["Message Type"]) === EVENT_MESSAGE_TRIGGER.offWaitlist &&
+      text_(message["Event ID"]) === eventId &&
+      (!text_(message["Session ID"]) || text_(message["Session ID"]) === sessionId));
+    const registrationCloses = date_(event && event["Registration Closes"]);
+    const sessionStarts = date_(session["Start At"]);
+    if (!event || !hasPromotionMessage || text_(event["Publish Status"]) !== "Published" ||
+        text_(event["Registration Enabled"]) !== "Yes" ||
+        !["Open", "Waitlist"].includes(text_(session["Registration Status"])) ||
+        (registrationCloses && registrationCloses.getTime() < Date.now()) ||
+        (sessionStarts && sessionStarts.getTime() <= Date.now())) continue;
+    const sessionEntries = entries.filter((entry) =>
+      text_(entry.row[eventCol]) === eventId && text_(entry.row[sessionCol]) === sessionId);
+    const confirmed = sessionEntries.filter((entry) =>
+      text_(entry.row[statusCol]) === "Confirmed" && isActiveRsvp_(entry.record));
+    const queue = sessionEntries
+      .filter((entry) => text_(entry.row[statusCol]) === "Waitlisted" && isActiveRsvp_(entry.record))
+      .sort((a, b) => {
+        const aPosition = number_(a.row[positionCol]) || Number.MAX_SAFE_INTEGER;
+        const bPosition = number_(b.row[positionCol]) || Number.MAX_SAFE_INTEGER;
+        if (aPosition !== bPosition) return aPosition - bPosition;
+        const aSubmitted = date_(a.row[submittedCol]);
+        const bSubmitted = date_(b.row[submittedCol]);
+        const submittedDifference = (aSubmitted ? aSubmitted.getTime() : 0) -
+          (bSubmitted ? bSubmitted.getTime() : 0);
+        return submittedDifference || a.sheetRow - b.sheetRow;
+      });
+    const available = Math.max(0, capacity - confirmed.length);
+    const now = new Date();
+
+    queue.slice(0, available).forEach((entry) => {
+      const paymentMethod = text_(entry.row[methodCol]);
+      const amountDue = number_(entry.row[amountCol]);
+      const currentPaymentStatus = text_(entry.row[paymentCol]);
+      rsvpSheet.getRange(entry.sheetRow, statusCol + 1).setValue("Confirmed");
+      rsvpSheet.getRange(entry.sheetRow, positionCol + 1).setValue("");
+      rsvpSheet.getRange(entry.sheetRow, promotedCol + 1).setValue(now);
+
+      if (amountDue <= 0) {
+        rsvpSheet.getRange(entry.sheetRow, paymentCol + 1).setValue("Not Required");
+        rsvpSheet.getRange(entry.sheetRow, deadlineCol + 1).setValue("");
+      } else if (paymentMethod === "Card" && currentPaymentStatus !== "Paid") {
+        rsvpSheet.getRange(entry.sheetRow, paymentCol + 1).setValue("Awaiting Payment");
+        rsvpSheet.getRange(entry.sheetRow, deadlineCol + 1).setValue("");
+      } else {
+        if (currentPaymentStatus !== "Paid") {
+          rsvpSheet.getRange(entry.sheetRow, paymentCol + 1).setValue("Pending");
+        }
+        rsvpSheet.getRange(entry.sheetRow, deadlineCol + 1).setValue("");
+      }
+      entry.row[statusCol] = "Confirmed";
+      promoted += 1;
+    });
+
+    queue.slice(available).forEach((entry, index) => {
+      rsvpSheet.getRange(entry.sheetRow, positionCol + 1).setValue(index + 1);
+    });
+  }
+  return promoted;
 }
 
 function processScheduleChanges_(messages, events, sessions, rsvps) {
@@ -491,10 +779,38 @@ function sendEventMessage_(message, rsvp, event, session, deliveryKey, previousS
     MailApp.sendEmail(options);
     logEventMessage_(messageId, uniqueDeliveryKey, rsvpId, text_(rsvp["Event ID"]), recipient, "Sent", "");
     markRsvpEmailSent_(rsvpId, text_(message["Message Type"]));
+    if (text_(message["Message Type"]) === EVENT_MESSAGE_TRIGGER.offWaitlist) {
+      activatePromotedCardHold_(rsvpId);
+    }
     return true;
   } catch (error) {
     logEventMessage_(messageId, uniqueDeliveryKey, rsvpId, text_(rsvp["Event ID"]), recipient, "Failed", safeMessage_(error));
     throw error;
+  }
+}
+
+function activatePromotedCardHold_(rsvpId) {
+  try {
+    const rsvpSheet = sheet_(TABS.rsvps);
+    const values = rsvpSheet.getDataRange().getValues();
+    if (values.length < 2) return;
+    const headers = values[0].map(text_);
+    ensureHeader_(rsvpSheet, headers, "Payment Deadline");
+    const idCol = headers.indexOf("RSVP ID");
+    const rowIndex = values.findIndex((row, index) =>
+      index > 0 && text_(row[idCol]) === text_(rsvpId));
+    if (rowIndex < 0) return;
+    const statusCol = headers.indexOf("Registration Status");
+    const methodCol = headers.indexOf("Payment Method");
+    const paymentCol = headers.indexOf("Payment Status");
+    if (text_(values[rowIndex][statusCol]) !== "Confirmed" ||
+        text_(values[rowIndex][methodCol]) !== "Card" ||
+        text_(values[rowIndex][paymentCol]) === "Paid") return;
+    setByHeader_(rsvpSheet, headers, rowIndex + 1, "Payment Status", "Pending");
+    setByHeader_(rsvpSheet, headers, rowIndex + 1, "Payment Deadline",
+      new Date(Date.now() + CARD_PAYMENT_TIMEOUT_MS));
+  } catch (error) {
+    console.error(`Unable to start promoted card hold for RSVP ${rsvpId}: ${safeMessage_(error)}`);
   }
 }
 
@@ -510,6 +826,18 @@ function emailContext_(message, rsvp, event, session, previousSchedule) {
   const replyTo = text_(message["Reply-To Email"] || event["Contact Email"]);
   const location = [text_(event.Venue), text_(event["City/State"])].filter(Boolean).join(" · ");
   const siteUrl = text_(PropertiesService.getScriptProperties().getProperty("PUBLIC_SITE_URL")).replace(/\/$/, "");
+  const baseEventUrl = siteUrl && event.Slug ? `${siteUrl}/events/${text_(event.Slug)}` : "";
+  const offWaitlistUrl = baseEventUrl
+    ? `${baseEventUrl}?status=off-waitlist&rsvpId=${encodeURIComponent(text_(rsvp["RSVP ID"]))}` +
+      `&sessionId=${encodeURIComponent(text_(session["Session ID"]))}` +
+      `&paymentMethod=${encodeURIComponent(paymentMethod)}#registration`
+    : "";
+  const eventUrl = text_(message["Message Type"]) === EVENT_MESSAGE_TRIGGER.offWaitlist
+    ? offWaitlistUrl
+    : baseEventUrl;
+  const checkinUrl = siteUrl
+    ? `${siteUrl}/check-in?token=${encodeURIComponent(checkinToken_(rsvp, event, session))}`
+    : "";
   const previousStartsAt = date_(previousSchedule && previousSchedule.startAt);
   const previousEndsAt = date_(previousSchedule && previousSchedule.endAt);
   let paymentLine = "Payment: no payment required.";
@@ -531,7 +859,8 @@ function emailContext_(message, rsvp, event, session, previousSchedule) {
     payment_line: paymentLine,
     amount_due: currency_(amountDue),
     contact_email: text_(event["Contact Email"]),
-    event_url: siteUrl && event.Slug ? `${siteUrl}/events/${text_(event.Slug)}` : "",
+    event_url: eventUrl,
+    checkin_url: checkinUrl,
     calendar_url: siteUrl
       ? `${siteUrl}/api/calendar?eventId=${encodeURIComponent(text_(event["Event ID"]))}&sessionId=${encodeURIComponent(text_(session["Session ID"]))}`
       : "",
@@ -546,12 +875,36 @@ function emailContext_(message, rsvp, event, session, previousSchedule) {
   };
 }
 
+function checkinToken_(rsvp, event, session) {
+  const secret = PropertiesService.getScriptProperties().getProperty("WRITE_SECRET");
+  if (!secret) throw new Error("Missing WRITE_SECRET script property");
+  const endsAt = date_(session["End At"] || session["Start At"]);
+  const expiresAt = endsAt
+    ? endsAt.getTime() + 12 * 60 * 60 * 1000
+    : Date.now() + 24 * 60 * 60 * 1000;
+  const payload = {
+    rsvpId: text_(rsvp["RSVP ID"]),
+    eventId: text_(event["Event ID"]),
+    sessionId: text_(session["Session ID"]),
+    exp: Math.floor(expiresAt / 1000),
+  };
+  const encoded = Utilities.base64EncodeWebSafe(
+    JSON.stringify(payload),
+    Utilities.Charset.UTF_8
+  ).replace(/=+$/, "");
+  const signature = Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(encoded, secret, Utilities.Charset.UTF_8)
+  ).replace(/=+$/, "");
+  return `${encoded}.${signature}`;
+}
+
 function renderTemplate_(template, context) {
-  let rendered = text_(template);
-  Object.keys(context).forEach((key) => {
-    rendered = rendered.split(`{{${key}}}`).join(text_(context[key]));
+  return text_(template).replace(/{{\s*([a-z0-9_]+)\s*}}/gi, (placeholder, key) => {
+    const normalizedKey = text_(key).toLowerCase();
+    return Object.prototype.hasOwnProperty.call(context, normalizedKey)
+      ? text_(context[normalizedKey])
+      : placeholder;
   });
-  return rendered;
 }
 
 function wasEventMessageSent_(deliveryKey, rsvpId) {
@@ -575,6 +928,9 @@ function markRsvpEmailSent_(rsvpId, messageType) {
     setByHeader_(sheet, headers, rowIndex + 1, "Confirmation Sent", "Yes");
   } else if (messageType === EVENT_MESSAGE_TRIGGER.reminder) {
     setByHeader_(sheet, headers, rowIndex + 1, "Reminder Sent", "Yes");
+  } else if (messageType === EVENT_MESSAGE_TRIGGER.offWaitlist) {
+    ensureHeader_(sheet, headers, "Off Waitlist Sent");
+    setByHeader_(sheet, headers, rowIndex + 1, "Off Waitlist Sent", "Yes");
   }
 }
 

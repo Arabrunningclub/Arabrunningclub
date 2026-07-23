@@ -47,6 +47,8 @@ type RegistrationMessage = {
   paymentStatus?: "pending" | "paid";
   rsvpId?: string;
   checkoutError?: string;
+  waitlisted?: boolean;
+  offWaitlist?: boolean;
 };
 
 function formatDate(value: string, timeZone: string) {
@@ -230,7 +232,7 @@ export default function EventDetailClient({
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const checkoutStatus = params.get("status");
-    if (checkoutStatus !== "success" && checkoutStatus !== "cancel") return;
+    if (!["success", "cancel", "off-waitlist"].includes(checkoutStatus || "")) return;
 
     const returnedSessionId = params.get("sessionId");
     const returnedSession = sortedSessions.find((session) => session.sessionId === returnedSessionId)
@@ -245,7 +247,7 @@ export default function EventDetailClient({
         paymentMethod: "Card",
         paymentStatus: "paid",
       });
-    } else {
+    } else if (checkoutStatus === "cancel") {
       const returnedRsvpId = params.get("rsvpId") || "";
       setMessage({
         kind: "success",
@@ -259,6 +261,26 @@ export default function EventDetailClient({
         checkoutError: returnedRsvpId
           ? "Checkout was canceled. Complete payment within 30 minutes or the temporary hold will expire."
           : "Checkout was canceled and no payment was made.",
+      });
+    } else {
+      const returnedRsvpId = params.get("rsvpId") || "";
+      const returnedPaymentMethod = params.get("paymentMethod") || "None";
+      const isCard = returnedPaymentMethod === "Card";
+      if (returnedSession?.paymentMethods.includes(returnedPaymentMethod)) {
+        setPaymentMethod(returnedPaymentMethod);
+      }
+      setMessage({
+        kind: "success",
+        text: isCard
+          ? "A spot opened and is being held for you. Complete secure checkout before the payment window expires."
+          : "A spot opened and your registration is now confirmed using your selected payment method.",
+        amountDue: isCard
+          ? Number(returnedSession?.cardPrice) || 0
+          : returnedPaymentMethod === "None" ? 0 : Number(returnedSession?.payLaterPrice) || 0,
+        paymentMethod: returnedPaymentMethod,
+        paymentStatus: isCard ? "pending" : undefined,
+        rsvpId: returnedRsvpId,
+        offWaitlist: true,
       });
     }
     const scrollTimer = window.setTimeout(() => {
@@ -317,7 +339,6 @@ export default function EventDetailClient({
         rsvpId,
         eventId: event.eventId,
         sessionId,
-        email,
         returnPath: `/events/${encodeURIComponent(event.slug || event.eventId)}`,
       }),
     });
@@ -410,22 +431,26 @@ export default function EventDetailClient({
           ? "You’re on the waitlist."
           : "Your spot is reserved!";
       const amountDue = Number(data.amountDue) || 0;
+      const waitlisted = data.registrationStatus === "Waitlisted";
       const confirmation: RegistrationMessage = {
         kind: "success",
-        text: paymentMethod === "Card" && amountDue > 0
-          ? `${status} Opening secure checkout for your payment.`
-          : `${status} We’ll send event updates to ${email}.`,
-        amountDue,
+        text: waitlisted
+          ? `${status} We saved your payment preference and won’t charge you unless a spot opens.`
+          : paymentMethod === "Card" && amountDue > 0
+            ? `${status} Opening secure checkout for your payment.`
+            : `${status} We’ll send event updates to ${email}.`,
+        amountDue: waitlisted ? undefined : amountDue,
         paymentMethod,
         paymentStatus: paymentMethod === "Card" && amountDue > 0 ? "pending" : undefined,
         rsvpId: String(data.rsvpId || ""),
+        waitlisted,
       };
       setMessage(confirmation);
       setAboutOpen(true);
       setBeforeOpen(true);
       window.localStorage.removeItem(draftKey);
 
-      if (paymentMethod === "Card" && amountDue > 0) {
+      if (!waitlisted && paymentMethod === "Card" && amountDue > 0) {
         try {
           await createStripeCheckout(confirmation.rsvpId || "");
           return;
@@ -735,14 +760,18 @@ export default function EventDetailClient({
                   <CircleCheckBig className="h-8 w-8" style={{ color: theme.accentColor }} />
                 )}
                 <h3 className="mt-4 text-xl font-bold">
-                  {message.checkoutError
-                    ? "Payment not completed"
-                    : message.paymentMethod === "Card"
-                      ? "Registration confirmed"
-                      : "Registration complete"}
+                  {message.waitlisted
+                    ? "You’re on the waitlist"
+                    : message.offWaitlist
+                      ? "You’re off the waitlist"
+                      : message.checkoutError
+                        ? "Payment not completed"
+                        : message.paymentMethod === "Card"
+                          ? "Registration confirmed"
+                          : "Registration complete"}
                 </h3>
                 <p className="mt-2 text-sm leading-6 opacity-75">{message.text}</p>
-                {message.amountDue ? (
+                {message.amountDue && !message.waitlisted ? (
                   <div className="mt-4 rounded-xl border border-black/10 p-4">
                     <p className="text-xs font-bold uppercase tracking-wider opacity-60">
                       {message.paymentMethod === "Card"
@@ -761,7 +790,7 @@ export default function EventDetailClient({
                     </p>
                   </div>
                 ) : null}
-                {message.paymentMethod === "Card" && message.rsvpId && (
+                {message.paymentMethod === "Card" && message.rsvpId && !message.waitlisted && (
                   <button
                     type="button"
                     onClick={retryStripeCheckout}
