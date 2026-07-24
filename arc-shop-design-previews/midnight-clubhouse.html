@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1600, initial-scale=1" />
+  <title>ARC SHOP — Midnight Clubhouse</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --ink: #06101f;
+      --navy: #081a35;
+      --navy-2: #0c2850;
+      --cobalt: #3a68ff;
+      --cobalt-soft: #86a0ff;
+      --emerald: #18d987;
+      --white: #f7f9ff;
+      --mist: #b9c6dd;
+      --line: rgba(255,255,255,.13);
+      --panel: rgba(16, 39, 76, .72);
+    }
+
+    html, body {
+      width: 1600px;
+      height: 1000px;
+      margin: 0;
+      overflow: hidden;
+      color: var(--white);
+      background: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      position: relative;
+      background:
+        radial-gradient(circle at 80% 12%, rgba(58,104,255,.25), transparent 31%),
+        radial-gradient(circle at 10% 69%, rgba(24,217,135,.08), transparent 25%),
+        linear-gradient(145deg, #030914 0%, #07172d 46%, #020711 100%);
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .12;
+      background-image:
+        linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px);
+      background-size: 80px 80px;
+      mask-image: linear-gradient(to bottom, black, transparent 58%);
+    }
+
+    .page {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: 30px 72px 340px 58px 286px 150px 64px;
+    }
+
+    .utility {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      background: var(--emerald);
+      color: #02130d;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    .utility i {
+      width: 3px;
+      height: 3px;
+      border-radius: 99px;
+      background: currentColor;
+    }
+
+    header {
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 270px 1fr 270px;
+      align-items: center;
+      padding: 0 52px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(3,10,22,.67);
+      backdrop-filter: blur(18px);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+    .brand-mark {
+      width: 31px;
+      height: 31px;
+      position: relative;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 50%;
+    }
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      height: 4px;
+      border-radius: 20px;
+      transform: rotate(-36deg);
+    }
+    .brand-mark::before { top: 8px; background: var(--emerald); }
+    .brand-mark::after { top: 17px; background: var(--cobalt); }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 34px;
+      height: 100%;
+      align-items: center;
+    }
+    nav a {
+      color: var(--white);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+    }
+    nav a:first-child { color: var(--emerald); }
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 9px;
+    }
+    .action {
+      height: 34px;
+      min-width: 34px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      margin: 18px 28px 0;
+      border: 1px solid rgba(116,151,255,.34);
+      border-radius: 24px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(4,14,30,.96) 0%, rgba(5,18,38,.78) 39%, rgba(5,15,29,.15) 70%),
+        radial-gradient(circle at 76% 35%, rgba(50,95,255,.82), transparent 30%),
+        linear-gradient(125deg, #112d56, #06101f 72%);
+      box-shadow: 0 24px 80px rgba(0,0,0,.28);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 590px;
+      height: 590px;
+      right: 82px;
+      top: -153px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 44px rgba(255,255,255,.025),
+        0 0 0 98px rgba(31,217,135,.035);
+    }
+    .hero::after {
+      content: "ARC / 01";
+      position: absolute;
+      right: 48px;
+      bottom: 30px;
+      writing-mode: vertical-rl;
+      color: rgba(255,255,255,.45);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .28em;
+    }
+    .runner {
+      position: absolute;
+      right: 225px;
+      top: 34px;
+      width: 215px;
+      height: 282px;
+      filter: drop-shadow(0 24px 30px rgba(0,0,0,.36));
+    }
+    .runner .head {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      left: 88px;
+      top: 1px;
+      border-radius: 50%;
+      background: linear-gradient(150deg,#d9ad8d,#7c4e3b);
+    }
+    .runner .body {
+      position: absolute;
+      width: 98px;
+      height: 135px;
+      left: 61px;
+      top: 39px;
+      border-radius: 50px 50px 22px 22px;
+      transform: rotate(-7deg);
+      background: linear-gradient(120deg, #f5f7fa, #7d91ae 78%);
+      box-shadow: inset -15px -8px 24px rgba(1,9,20,.25);
+    }
+    .runner .arm,
+    .runner .leg {
+      position: absolute;
+      border-radius: 999px;
+      transform-origin: top;
+    }
+    .runner .arm { width: 27px; height: 122px; top: 58px; background: #ad7960; }
+    .runner .arm.a { left: 67px; transform: rotate(57deg); }
+    .runner .arm.b { left: 144px; transform: rotate(-55deg); }
+    .runner .shorts {
+      position: absolute;
+      left: 57px;
+      top: 150px;
+      width: 108px;
+      height: 67px;
+      background: linear-gradient(130deg,#091324,#192e53);
+      clip-path: polygon(8% 0, 92% 0, 100% 100%, 52% 88%, 0 100%);
+    }
+    .runner .leg { width: 34px; height: 113px; top: 197px; background: #a56e56; }
+    .runner .leg.a { left: 72px; transform: rotate(13deg); }
+    .runner .leg.b { left: 132px; transform: rotate(-19deg); }
+
+    .hero-copy {
+      width: 700px;
+      padding: 39px 0 0 48px;
+    }
+    .eyebrow {
+      color: var(--emerald);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 8px 0 8px;
+      font-size: 75px;
+      line-height: .9;
+      letter-spacing: -.065em;
+      font-weight: 900;
+    }
+    .hero p {
+      width: 530px;
+      margin: 0;
+      color: #cbd5e8;
+      font-size: 17px;
+      line-height: 1.48;
+    }
+    .ctas { display: flex; gap: 10px; margin-top: 20px; }
+    .btn {
+      display: inline-flex;
+      height: 43px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0 20px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+    .btn.primary { background: var(--white); color: var(--navy); }
+    .btn.secondary { color: var(--white); border: 1px solid rgba(255,255,255,.32); }
+    .btn span { margin-left: 15px; font-size: 17px; line-height: 1; }
+
+    .collections {
+      display: flex;
+      align-items: center;
+      padding: 0 44px;
+      border-bottom: 1px solid var(--line);
+      border-top: 1px solid rgba(255,255,255,.05);
+    }
+    .collections strong {
+      margin-right: 40px;
+      color: #7f91ad;
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+    .collection-link {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 10px;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+    .collection-link::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1px solid var(--emerald);
+    }
+    .collection-link:nth-child(3)::before { border-color: var(--cobalt-soft); }
+    .collection-link:nth-child(4)::before { border-color: #fff; }
+    .collection-link:nth-child(5)::before { border-color: #667996; }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: 270px repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px 28px;
+    }
+    .shop-heading {
+      padding: 10px 18px 0 4px;
+    }
+    .shop-heading h2 {
+      margin: 7px 0 9px;
+      font-size: 34px;
+      line-height: .98;
+      letter-spacing: -.04em;
+    }
+    .shop-heading p {
+      margin: 0 0 22px;
+      color: var(--mist);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .shop-heading a {
+      color: var(--white);
+      font-size: 11px;
+      text-decoration-color: var(--emerald);
+      text-underline-offset: 7px;
+      font-weight: 900;
+      letter-spacing: .1em;
+    }
+    .product {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 188px 50px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      overflow: hidden;
+      background: rgba(11,31,59,.69);
+      box-shadow: inset 0 1px rgba(255,255,255,.04);
+    }
+    .visual {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 56% 37%, rgba(255,255,255,.24), transparent 6%),
+        linear-gradient(145deg, #335187, #0c203e 68%);
+    }
+    .visual::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 51%;
+      width: 108px;
+      height: 145px;
+      transform: translate(-50%,-50%);
+      border-radius: 38px 38px 18px 18px;
+      background:
+        linear-gradient(93deg, transparent 45%, rgba(255,255,255,.16) 47%, transparent 51%),
+        linear-gradient(145deg, #d7e1ee, #52657f);
+      box-shadow: 0 24px 30px rgba(0,0,0,.28);
+      clip-path: polygon(26% 0, 42% 10%, 58% 10%, 74% 0, 100% 21%, 82% 37%, 77% 100%, 23% 100%, 18% 37%, 0 21%);
+    }
+    .visual.v2 {
+      background: radial-gradient(circle at 60% 30%, rgba(59,104,255,.35), transparent 28%), linear-gradient(145deg,#111827,#050b15);
+    }
+    .visual.v2::after {
+      width: 121px;
+      height: 154px;
+      border-radius: 18px 18px 32px 32px;
+      background: linear-gradient(135deg,#0e2144,#030712);
+      clip-path: polygon(14% 0, 37% 0, 44% 10%, 56% 10%, 63% 0, 86% 0, 100% 100%, 0 100%);
+      box-shadow: inset 0 0 0 1px rgba(134,160,255,.25), 0 24px 30px rgba(0,0,0,.38);
+    }
+    .visual.v3 {
+      background: radial-gradient(circle at 38% 34%, rgba(24,217,135,.23), transparent 23%), linear-gradient(145deg,#22453d,#0b1e2b);
+    }
+    .visual.v3::after {
+      width: 127px;
+      height: 146px;
+      background: linear-gradient(140deg,#ecf3ed,#839a8f);
+      clip-path: polygon(26% 0, 40% 8%, 60% 8%, 74% 0, 100% 18%, 83% 36%, 80% 100%, 20% 100%, 17% 36%, 0 18%);
+    }
+    .tag {
+      position: absolute;
+      left: 12px;
+      top: 11px;
+      z-index: 2;
+      padding: 6px 9px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 99px;
+      background: rgba(3,10,22,.66);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .14em;
+    }
+    .product-meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 0 13px;
+    }
+    .product-name { font-size: 12px; font-weight: 800; }
+    .product-detail { margin-top: 3px; color: #8293af; font-size: 9px; }
+    .price { font-size: 12px; font-weight: 800; }
+
+    .manifesto {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+      padding: 0 28px 14px;
+    }
+    .manifesto-main,
+    .newsletter {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .manifesto-main {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      padding: 22px 28px;
+    }
+    .manifesto-main h3 {
+      margin: 5px 0 4px;
+      font-size: 26px;
+      letter-spacing: -.04em;
+    }
+    .manifesto-main p {
+      margin: 0;
+      color: var(--mist);
+      font-size: 11px;
+      line-height: 1.45;
+      max-width: 550px;
+    }
+    .pulse {
+      position: absolute;
+      right: -23px;
+      top: -66px;
+      width: 260px;
+      height: 260px;
+      border: 1px solid rgba(24,217,135,.35);
+      border-radius: 50%;
+      box-shadow: 0 0 0 29px rgba(24,217,135,.04), 0 0 0 57px rgba(58,104,255,.035);
+    }
+    .members {
+      z-index: 1;
+      align-self: center;
+      justify-self: end;
+      text-align: right;
+    }
+    .members b { display: block; font-size: 26px; }
+    .members span { color: var(--emerald); font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+    .newsletter {
+      padding: 22px 25px;
+      background: linear-gradient(125deg, rgba(58,104,255,.3), rgba(9,29,58,.78));
+    }
+    .newsletter h3 { margin: 5px 0 3px; font-size: 20px; }
+    .newsletter p { margin: 0 0 13px; color: var(--mist); font-size: 10px; }
+    .email {
+      display: flex;
+      width: 100%;
+      height: 34px;
+      border-bottom: 1px solid rgba(255,255,255,.5);
+      color: rgba(255,255,255,.7);
+      font-size: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .email b { color: var(--emerald); letter-spacing: .1em; }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 44px;
+      color: #73839d;
+      font-size: 9px;
+      letter-spacing: .08em;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    footer .links { display: flex; gap: 28px; color: #aab5c7; }
+    footer .foot-brand { color: white; font-weight: 900; letter-spacing: .16em; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="utility">Free shipping over $100 <i></i> Easy returns</div>
+
+    <header>
+      <div class="brand"><span class="brand-mark"></span>ARC SHOP</div>
+      <nav>
+        <a href="#">WOMEN</a>
+        <a href="#">MEN</a>
+        <a href="#">UNISEX</a>
+        <a href="#">ACCESSORIES</a>
+      </nav>
+      <div class="actions">
+        <div class="action">SEARCH</div>
+        <div class="action">◎</div>
+        <div class="action">BAG&nbsp; 0</div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">New season / Movement system 01</div>
+        <h1>MOVE AS ONE.</h1>
+        <p>Technical essentials for training, transit, and everything between.</p>
+        <div class="ctas">
+          <a class="btn primary" href="#">SHOP THE DROP <span>→</span></a>
+          <a class="btn secondary" href="#">OUR STORY <span>↗</span></a>
+        </div>
+      </div>
+      <div class="runner" aria-hidden="true">
+        <div class="head"></div><div class="body"></div>
+        <div class="arm a"></div><div class="arm b"></div>
+        <div class="shorts"></div><div class="leg a"></div><div class="leg b"></div>
+      </div>
+    </section>
+
+    <section class="collections">
+      <strong>Shop by movement</strong>
+      <div class="collection-link">TRAINING SYSTEM</div>
+      <div class="collection-link">EVERYDAY MOTION</div>
+      <div class="collection-link">CLUB ESSENTIALS</div>
+      <div class="collection-link">RECOVERY LAYER</div>
+    </section>
+
+    <section class="shop-grid">
+      <div class="shop-heading">
+        <div class="eyebrow">Drop 001</div>
+        <h2>BUILT TO<br>KEEP UP.</h2>
+        <p>Considered layers, technical fabrics, and a club-first point of view.</p>
+        <a href="#">VIEW ALL PRODUCTS&nbsp; →</a>
+      </div>
+
+      <article class="product">
+        <div class="visual"><span class="tag">NEW / UNISEX</span></div>
+        <div class="product-meta">
+          <div><div class="product-name">Circuit Training Tee</div><div class="product-detail">Mist / Cobalt · 5 colors</div></div>
+          <div class="price">$54</div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="visual v2"><span class="tag">CLUB FAVORITE</span></div>
+        <div class="product-meta">
+          <div><div class="product-name">Transit Pace Short</div><div class="product-detail">Midnight · 3 colors</div></div>
+          <div class="price">$72</div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="visual v3"><span class="tag">LIGHTWEIGHT</span></div>
+        <div class="product-meta">
+          <div><div class="product-name">Relay Shell</div><div class="product-detail">Cloud / Field · 4 colors</div></div>
+          <div class="price">$118</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="manifesto">
+      <div class="manifesto-main">
+        <div>
+          <div class="eyebrow">More than a uniform</div>
+          <h3>THE CLUB MOVES WITH YOU.</h3>
+          <p>ARC is a shared rhythm—for first miles, late nights, and every person finding their pace.</p>
+        </div>
+        <div class="members"><b>1,800+</b><span>PEOPLE IN MOTION</span></div>
+        <div class="pulse"></div>
+      </div>
+      <div class="newsletter">
+        <div class="eyebrow">Stay in the loop</div>
+        <h3>JOIN THE MOVEMENT.</h3>
+        <p>Early access, field notes, and local events.</p>
+        <div class="email"><span>YOUR EMAIL ADDRESS</span><b>SIGN UP&nbsp; →</b></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="foot-brand">ARC SHOP</div>
+      <div class="links"><span>SHOP</span><span>ABOUT</span><span>SIZE GUIDE</span><span>SHIPPING + RETURNS</span><span>CONTACT</span></div>
+      <div>© 2026 ARAB RECREATIONAL CLUB</div>
+    </footer>
+  </main>
+</body>
+</html>

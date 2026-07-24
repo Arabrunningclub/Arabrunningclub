@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARC SHOP — Velocity Editorial</title>
+  <style>
+    :root {
+      --ink: #0b0c0a;
+      --ink-soft: #171916;
+      --bone: #f2efe5;
+      --paper: #e8e3d6;
+      --acid: #6dff38;
+      --line: rgba(242, 239, 229, 0.22);
+      --muted: #a5a89f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      min-width: 1200px;
+      margin: 0;
+      background: var(--ink);
+      color: var(--bone);
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      height: 1000px;
+      overflow: hidden;
+      letter-spacing: -0.01em;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+
+    .page {
+      width: 1600px;
+      height: 1000px;
+      margin: 0 auto;
+      background:
+        radial-gradient(circle at 83% 9%, rgba(109, 255, 56, 0.08), transparent 22%),
+        var(--ink);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .utility {
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--acid);
+      color: #071005;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .nav {
+      height: 70px;
+      padding: 0 50px;
+      display: grid;
+      grid-template-columns: 260px 1fr 260px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(11,12,10,.96);
+      position: relative;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 25px;
+      font-weight: 950;
+      letter-spacing: -.06em;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 22px;
+      position: relative;
+    }
+
+    .brand-mark:before,
+    .brand-mark:after {
+      content: "";
+      position: absolute;
+      height: 7px;
+      border-radius: 20px;
+      transform: skewX(-28deg);
+    }
+
+    .brand-mark:before {
+      width: 32px;
+      left: 0;
+      top: 2px;
+      background: var(--bone);
+      box-shadow: 7px 11px 0 var(--acid);
+    }
+
+    .brand-mark:after {
+      width: 12px;
+      right: 0;
+      top: 2px;
+      background: #ef3f35;
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: 38px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: .15em;
+    }
+
+    .nav-links a {
+      position: relative;
+      padding: 28px 0;
+    }
+
+    .nav-links a:first-child:after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 20px;
+      height: 2px;
+      background: var(--acid);
+      transform: scaleX(.5);
+      transform-origin: left;
+    }
+
+    .utilities {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(242,239,229,.16);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: var(--bone);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .bag {
+      width: auto;
+      padding: 0 14px;
+      gap: 8px;
+      display: flex;
+    }
+
+    .hero {
+      height: 322px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(101deg, #10120f 0 46%, transparent 46%),
+        linear-gradient(135deg, #262922 0 22%, #141612 22% 46%, #34372f 46% 68%, #1a1c18 68%);
+    }
+
+    .hero:before {
+      content: "";
+      position: absolute;
+      width: 660px;
+      height: 420px;
+      top: -75px;
+      right: 66px;
+      background:
+        linear-gradient(118deg, transparent 0 33%, var(--acid) 33% 34%, transparent 34%),
+        linear-gradient(83deg, rgba(255,255,255,.1) 0 1px, transparent 1px),
+        radial-gradient(ellipse at 52% 42%, #565a4e 0 4%, #2c2f29 5% 14%, transparent 15%);
+      border-radius: 52% 20% 44% 18%;
+      transform: rotate(-8deg);
+      opacity: .82;
+      filter: saturate(.55);
+    }
+
+    .hero:after {
+      content: "01 / NEW SYSTEM";
+      position: absolute;
+      right: 45px;
+      top: 28px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      color: var(--acid);
+      writing-mode: vertical-rl;
+    }
+
+    .hero-slash {
+      position: absolute;
+      width: 430px;
+      height: 90px;
+      right: 265px;
+      bottom: -24px;
+      background: var(--acid);
+      transform: rotate(-7deg) skewX(-14deg);
+      opacity: .9;
+      mix-blend-mode: screen;
+    }
+
+    .hero-copy {
+      width: 760px;
+      height: 100%;
+      padding: 36px 0 28px 50px;
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--acid);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow:before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      background: var(--acid);
+    }
+
+    h1 {
+      margin: 4px 0 2px;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 100px;
+      line-height: .88;
+      letter-spacing: -.035em;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      max-width: 500px;
+      margin: 10px 0 16px;
+      color: #c5c6bd;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .button {
+      min-height: 42px;
+      padding: 0 22px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 19px;
+      border: 1px solid var(--bone);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      transition: .25s ease;
+    }
+
+    .button.primary {
+      background: var(--bone);
+      color: var(--ink);
+    }
+
+    .button .arrow {
+      font-size: 18px;
+      line-height: 0;
+      transform: translateY(-1px);
+    }
+
+    .collection-strip {
+      height: 46px;
+      background: var(--bone);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border-bottom: 1px solid #a7a49a;
+    }
+
+    .collection-track {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-around;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 17px;
+      letter-spacing: .04em;
+    }
+
+    .collection-track span {
+      display: inline-flex;
+      align-items: center;
+      gap: 22px;
+      white-space: nowrap;
+    }
+
+    .collection-track span:after {
+      content: "↗";
+      font-family: Arial, sans-serif;
+      font-size: 17px;
+      color: #65665e;
+    }
+
+    .shop {
+      height: 274px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-lead {
+      padding: 26px 36px 24px 50px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        linear-gradient(145deg, rgba(109,255,56,.08), transparent 44%),
+        #10120f;
+    }
+
+    .section-lead .kicker {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .19em;
+      color: var(--acid);
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 7px 0 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 48px;
+      line-height: .9;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      max-width: 220px;
+    }
+
+    .section-lead p {
+      margin: 10px 0 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .link {
+      align-self: flex-start;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--acid);
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .product {
+      min-width: 0;
+      border-right: 1px solid var(--line);
+      position: relative;
+      background: #151714;
+    }
+
+    .product:last-child { border-right: 0; }
+
+    .product-image {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      background: #d8d4c8;
+    }
+
+    .product-image:before {
+      content: "";
+      position: absolute;
+      inset: 16px 98px 12px;
+      clip-path: polygon(24% 0, 42% 9%, 58% 9%, 76% 0, 100% 26%, 86% 40%, 78% 32%, 77% 100%, 23% 100%, 22% 32%, 14% 40%, 0 26%);
+      background:
+        linear-gradient(90deg, transparent 49.2%, rgba(255,255,255,.12) 50%, transparent 50.8%),
+        linear-gradient(145deg, #242623, #0b0c0a 58%, #373a34);
+      filter: drop-shadow(0 14px 13px rgba(0,0,0,.26));
+    }
+
+    .product:nth-child(2) .product-image {
+      background: #2c3031;
+    }
+
+    .product:nth-child(2) .product-image:before {
+      inset: 21px 103px 10px;
+      clip-path: polygon(19% 0, 37% 8%, 63% 8%, 81% 0, 100% 24%, 84% 40%, 76% 31%, 73% 100%, 27% 100%, 24% 31%, 16% 40%, 0 24%);
+      background:
+        linear-gradient(90deg, transparent 49.2%, rgba(255,255,255,.12) 50%, transparent 50.8%),
+        linear-gradient(160deg, #f1eee5, #bebbb2);
+    }
+
+    .product:nth-child(3) .product-image {
+      background: #d4d0c5;
+    }
+
+    .product:nth-child(3) .product-image:before {
+      inset: 35px 82px 12px;
+      clip-path: polygon(12% 0, 88% 0, 100% 18%, 72% 28%, 69% 100%, 31% 100%, 28% 28%, 0 18%);
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255,255,255,.15) 50%, transparent 51%),
+        linear-gradient(145deg, #495f3a, #182010 72%);
+    }
+
+    .product-tag {
+      position: absolute;
+      z-index: 3;
+      top: 12px;
+      left: 12px;
+      padding: 6px 8px;
+      background: var(--ink);
+      color: var(--acid);
+      font-size: 8px;
+      letter-spacing: .15em;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .quick {
+      position: absolute;
+      z-index: 3;
+      right: 12px;
+      bottom: 10px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--bone);
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    }
+
+    .product-meta {
+      height: 74px;
+      padding: 12px 15px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+    }
+
+    .product-name {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    .color {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .price {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .movement {
+      height: 162px;
+      display: grid;
+      grid-template-columns: 1.12fr .88fr;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .manifesto {
+      padding: 21px 50px;
+      background:
+        linear-gradient(103deg, transparent 0 78%, rgba(109,255,56,.08) 78%),
+        #0d0f0c;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 26px;
+      align-items: center;
+    }
+
+    .manifesto h3 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 40px;
+      line-height: .93;
+      letter-spacing: -.01em;
+      text-transform: uppercase;
+    }
+
+    .manifesto-copy {
+      padding-left: 25px;
+      border-left: 1px solid var(--line);
+    }
+
+    .manifesto-copy p {
+      max-width: 545px;
+      margin: 0 0 13px;
+      font-size: 14px;
+      line-height: 1.42;
+      color: #c1c3ba;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 34px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      color: var(--acid);
+      text-transform: uppercase;
+    }
+
+    .community-visual {
+      position: relative;
+      background:
+        linear-gradient(90deg, rgba(8,9,8,.36), transparent 60%),
+        repeating-linear-gradient(115deg, #373c34 0 24px, #282c27 24px 48px);
+    }
+
+    .community-visual:before,
+    .community-visual:after {
+      content: "";
+      position: absolute;
+      width: 116px;
+      height: 150px;
+      bottom: -36px;
+      border-radius: 60px 60px 18px 18px;
+      background: linear-gradient(130deg, #757a6e, #242721 65%);
+      transform: rotate(10deg);
+      box-shadow: 0 0 0 8px rgba(255,255,255,.03);
+    }
+
+    .community-visual:before { left: 122px; }
+    .community-visual:after {
+      left: 292px;
+      transform: rotate(-12deg);
+      background: linear-gradient(130deg, #4b5c40, #131612 68%);
+    }
+
+    .movement-label {
+      position: absolute;
+      right: 30px;
+      top: 26px;
+      text-align: right;
+      z-index: 2;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 28px;
+      line-height: .96;
+      text-transform: uppercase;
+    }
+
+    .movement-label small {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--acid);
+      font-family: Inter, Arial, sans-serif;
+      font-size: 8px;
+      letter-spacing: .18em;
+    }
+
+    .footer {
+      height: 102px;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      background: var(--bone);
+      color: var(--ink);
+    }
+
+    .footer-brand {
+      padding: 18px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid #b8b3a6;
+    }
+
+    .footer-brand strong {
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: 28px;
+      letter-spacing: .015em;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 21px;
+      color: #55564f;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .newsletter {
+      padding: 17px 48px 14px;
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: 34px;
+      align-items: center;
+    }
+
+    .newsletter h4 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .newsletter p {
+      margin: 0;
+      color: #5c5d57;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .signup {
+      height: 42px;
+      border-bottom: 2px solid var(--ink);
+      display: flex;
+      align-items: center;
+    }
+
+    .signup input {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .signup button {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--bone);
+      font-size: 17px;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="utility">Free shipping over $100 &nbsp;·&nbsp; Easy returns</div>
+
+    <header class="nav">
+      <a class="brand" href="#">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>ARC SHOP</span>
+      </a>
+      <nav class="nav-links" aria-label="Shop categories">
+        <a href="#">Women</a>
+        <a href="#">Men</a>
+        <a href="#">Unisex</a>
+        <a href="#">Accessories</a>
+      </nav>
+      <div class="utilities" aria-label="Store utilities">
+        <button class="icon-button" aria-label="Search">⌕</button>
+        <button class="icon-button" aria-label="Account">○</button>
+        <button class="icon-button bag" aria-label="Shopping bag">Bag <span>0</span></button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-slash" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <div class="eyebrow">Drop 01 · Built to move</div>
+        <h1>Move as one.</h1>
+        <p>Technical essentials for training, transit, and everything between.</p>
+        <div class="actions">
+          <a class="button primary" href="#">Shop the drop <span class="arrow">↗</span></a>
+          <a class="button" href="#">Our story <span class="arrow">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="collection-strip" aria-label="Collections">
+      <div class="collection-track">
+        <span>Train</span>
+        <span>Recover</span>
+        <span>Commute</span>
+        <span>Gather</span>
+        <span>Limited ARC Editions</span>
+      </div>
+    </section>
+
+    <section class="shop">
+      <div class="section-lead">
+        <div>
+          <div class="kicker">New system / 01</div>
+          <h2>Essential motion.</h2>
+          <p>Built in Detroit. Tested wherever the day takes you.</p>
+        </div>
+        <a class="link" href="#">Explore all pieces ↗</a>
+      </div>
+
+      <div class="products">
+        <article class="product">
+          <div class="product-image">
+            <span class="product-tag">New</span>
+            <span class="quick">+</span>
+          </div>
+          <div class="product-meta">
+            <div>
+              <div class="product-name">Signal Run Shell</div>
+              <div class="color">Obsidian · 4 colors</div>
+            </div>
+            <div class="price">$148</div>
+          </div>
+        </article>
+
+        <article class="product">
+          <div class="product-image">
+            <span class="product-tag">Core</span>
+            <span class="quick">+</span>
+          </div>
+          <div class="product-meta">
+            <div>
+              <div class="product-name">Unity Training Tee</div>
+              <div class="color">Bone · 3 colors</div>
+            </div>
+            <div class="price">$58</div>
+          </div>
+        </article>
+
+        <article class="product">
+          <div class="product-image">
+            <span class="product-tag">Limited</span>
+            <span class="quick">+</span>
+          </div>
+          <div class="product-meta">
+            <div>
+              <div class="product-name">Transit Utility Pant</div>
+              <div class="color">Field · 2 colors</div>
+            </div>
+            <div class="price">$118</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="movement">
+      <div class="manifesto">
+        <h3>More than apparel.</h3>
+        <div class="manifesto-copy">
+          <p>ARC is a uniform for the people moving cities, starting clubs, and making room for one another.</p>
+          <div class="stat-row">
+            <span>One community</span>
+            <span>Every pace</span>
+            <span>Always forward</span>
+          </div>
+        </div>
+      </div>
+      <div class="community-visual">
+        <div class="movement-label"><small>Community / Detroit</small>Movement<br>looks like us.</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-brand">
+        <strong>ARC SHOP / MOVE TOGETHER.</strong>
+        <div class="footer-links">
+          <a href="#">Shipping</a>
+          <a href="#">Returns</a>
+          <a href="#">Contact</a>
+          <a href="#">Instagram</a>
+          <span>© 2026 ARC</span>
+        </div>
+      </div>
+      <div class="newsletter">
+        <div>
+          <h4>Join the movement.</h4>
+          <p>Early drops, community runs, and field notes—straight to your inbox.</p>
+        </div>
+        <form class="signup">
+          <input aria-label="Email address" placeholder="Your email address">
+          <button aria-label="Join newsletter" type="button">→</button>
+        </form>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

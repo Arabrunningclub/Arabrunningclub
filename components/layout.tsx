@@ -25,7 +25,7 @@ const FALLBACK_NAV_ITEMS = [
   { name: "Donations", href: "/donations" },
   {
     name: "Shop",
-    href: "https://shop.wakingup.com/products/work-in-progress-t-shirt?srsltid=AfmBOop1KjQPbEB77g-M3F8egLSPn3CRJ0jgyAkB-xxJk2-8qkjRm0-l&variant=44256900415735",
+    href: "https://arc-shop-movement.kingdommandan.chatgpt.site/",
     external: true,
   },
   { name: "Gallery", href: "/gallery" },
