@@ -25,8 +25,8 @@ const FALLBACK_NAV_ITEMS = [
   { name: "Donations", href: "/donations" },
   {
     name: "Shop",
-    href: "https://arc-shop-movement.kingdommandan.chatgpt.site/",
-    external: true,
+    href: "/shop",
+    external: false,
   },
   { name: "Gallery", href: "/gallery" },
 ];
@@ -55,8 +55,9 @@ export default function Layout({
     siteData?.navigation?.length
       ? siteData.navigation.map((item) => ({
           name: item.label,
-          href: item.url,
-          external: item.external,
+          href: item.label.toLowerCase() === "shop" ? "/shop" : item.url,
+          external:
+            item.label.toLowerCase() === "shop" ? false : item.external,
         }))
       : FALLBACK_NAV_ITEMS;
   const organizationName =
