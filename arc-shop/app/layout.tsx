@@ -3,8 +3,13 @@ import "./globals.css";
 import { MotionProvider } from "@/components/MotionProvider";
 import { StoreProvider } from "@/components/StoreProvider";
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.URL ||
+  "http://localhost:3000";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://arc-shop-movement.kingdommandan.chatgpt.site"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "ARC Shop — Movement apparel for every pace",
     template: "%s — ARC Shop",
