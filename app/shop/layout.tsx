@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MotionProvider } from "@/components/arc-shop/MotionProvider";
+import { ShopAuthRedirect } from "@/components/arc-shop/ShopAuthRedirect";
 import { StoreProvider } from "@/components/arc-shop/StoreProvider";
 import "./shop.css";
 
@@ -28,6 +29,7 @@ export default function ShopLayout({
   return (
     <StoreProvider>
       <div className="arc-shop">
+        <ShopAuthRedirect />
         <MotionProvider />
         {children}
       </div>
