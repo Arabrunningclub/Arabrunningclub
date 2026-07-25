@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { products as fallbackProducts, type Product } from "@/lib/arc-shop/catalog";
+import {
+  normalizeShopImageUrl,
+  products as fallbackProducts,
+  type Product,
+} from "@/lib/arc-shop/catalog";
 import { Logo } from "./Logo";
 
 type AdminProduct = Product & {
@@ -504,7 +508,10 @@ function SwipeableProductRow({
         onPointerUp={pointerUp}
         onPointerCancel={pointerUp}
       >
-        <img src={product.image_url || product.image} alt="" />
+        <img
+          src={normalizeShopImageUrl(product.image_url || product.image)}
+          alt=""
+        />
         <div>
           <span>{product.eyebrow}</span>
           <strong>{product.name}</strong>
@@ -677,7 +684,10 @@ function ProductEditor({
             />
           </label>
           <div className="editor-preview">
-            <img src={draft.image_url || draft.image} alt="" />
+            <img
+              src={normalizeShopImageUrl(draft.image_url || draft.image)}
+              alt=""
+            />
             <span>
               Media uploads activate with Supabase Storage. Existing public
               URLs work now.

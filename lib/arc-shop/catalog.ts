@@ -144,6 +144,13 @@ export function formatPrice(price: number) {
   }).format(price);
 }
 
+export function normalizeShopImageUrl(imageUrl: string) {
+  if (imageUrl.startsWith("/images/")) {
+    return `/shop${imageUrl}`;
+  }
+  return imageUrl;
+}
+
 export function getProduct(slug: string) {
   return products.find((product) => product.slug === slug);
 }

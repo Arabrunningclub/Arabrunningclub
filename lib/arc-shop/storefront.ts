@@ -1,4 +1,8 @@
-import { products as fallbackProducts, type Product } from "./catalog";
+import {
+  normalizeShopImageUrl,
+  products as fallbackProducts,
+  type Product,
+} from "./catalog";
 
 type StorefrontRow = {
   id: string;
@@ -57,7 +61,7 @@ function mapStorefrontRow(row: StorefrontRow): Product {
     description: row.description,
     details: row.details ?? [],
     price: Math.round(row.price_cents / 100),
-    image: row.image_url,
+    image: normalizeShopImageUrl(row.image_url),
     imageAlt: row.image_alt,
     category: row.category,
     collection: row.collection,
