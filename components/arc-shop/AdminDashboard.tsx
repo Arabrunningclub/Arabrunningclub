@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { products as fallbackProducts, type Product } from "@/lib/arc-shop/catalog";
 import { Logo } from "./Logo";
@@ -74,6 +74,9 @@ export function AdminDashboard({
   );
   const [orders, setOrders] = useState<AdminOrder[]>(demoOrders);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
+  const [deletingId, setDeletingId] = useState("");
+  const [archivedProduct, setArchivedProduct] =
+    useState<AdminProduct | null>(null);
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -128,6 +131,73 @@ export function AdminDashboard({
     () => products.reduce((total) => total + 20, 0),
     [products],
   );
+
+  async function deleteProduct(product: AdminProduct) {
+    if (deletingId) return;
+    setDeletingId(product.id);
+    setMessage("");
+
+    try {
+      if (configured) {
+        const response = await fetch(
+          `/api/shop/admin/products?id=${encodeURIComponent(product.id)}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Product could not be removed.");
+        }
+      }
+
+      setProducts((current) =>
+        current.filter((item) => item.id !== product.id),
+      );
+      setArchivedProduct(product);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Product could not be removed.",
+      );
+    } finally {
+      setDeletingId("");
+    }
+  }
+
+  async function undoDelete() {
+    if (!archivedProduct) return;
+    const product = archivedProduct;
+    setArchivedProduct(null);
+
+    try {
+      if (configured) {
+        const response = await fetch("/api/shop/admin/products", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ ...product, status: "active" }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Product could not be restored.");
+        }
+      }
+
+      setProducts((current) =>
+        [...current, { ...product, status: "active" }].sort(
+          (a, b) => (a.sort_order || 0) - (b.sort_order || 0),
+        ),
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Product could not be restored.",
+      );
+      setArchivedProduct(product);
+    }
+  }
 
   if (configured && !token) {
     return (
@@ -248,21 +318,16 @@ export function AdminDashboard({
                 Add a product +
               </button>
             </div>
+            {message && <p className="admin-inline-error">{message}</p>}
             <div className="admin-product-list">
               {products.map((product) => (
-                <article key={product.id}>
-                  <img src={product.image_url || product.image} alt="" />
-                  <div>
-                    <span>{product.eyebrow}</span>
-                    <strong>{product.name}</strong>
-                  </div>
-                  <span>{product.category}</span>
-                  <span>${Math.round((product.price_cents || product.price * 100) / 100)}</span>
-                  <span className="stock-good">20 in stock</span>
-                  <button type="button" onClick={() => setEditing(product)}>
-                    Edit →
-                  </button>
-                </article>
+                <SwipeableProductRow
+                  key={product.id}
+                  product={product}
+                  deleting={deletingId === product.id}
+                  onDelete={() => deleteProduct(product)}
+                  onEdit={() => setEditing(product)}
+                />
               ))}
             </div>
           </section>
@@ -352,7 +417,112 @@ export function AdminDashboard({
           }}
         />
       )}
+      {archivedProduct && (
+        <div className="admin-toast" role="status">
+          <div>
+            <strong>{archivedProduct.name}</strong>
+            <span>Removed from the storefront.</span>
+          </div>
+          <button type="button" onClick={undoDelete}>
+            Undo
+          </button>
+          <button
+            className="admin-toast-close"
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setArchivedProduct(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
     </main>
+  );
+}
+
+function SwipeableProductRow({
+  product,
+  deleting,
+  onDelete,
+  onEdit,
+}: {
+  product: AdminProduct;
+  deleting: boolean;
+  onDelete: () => void;
+  onEdit: () => void;
+}) {
+  const startX = useRef(0);
+  const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const reveal = 92;
+
+  function pointerDown(event: React.PointerEvent<HTMLElement>) {
+    startX.current = event.clientX - offset;
+    setDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function pointerMove(event: React.PointerEvent<HTMLElement>) {
+    if (!dragging) return;
+    const next = Math.max(
+      -reveal,
+      Math.min(reveal, event.clientX - startX.current),
+    );
+    setOffset(next);
+  }
+
+  function pointerUp(event: React.PointerEvent<HTMLElement>) {
+    if (!dragging) return;
+    setDragging(false);
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    setOffset(Math.abs(offset) > 54 ? Math.sign(offset) * reveal : 0);
+  }
+
+  return (
+    <div className="swipe-product">
+      <button
+        className="swipe-delete swipe-delete-left"
+        type="button"
+        onClick={onDelete}
+        disabled={deleting}
+      >
+        {deleting ? "Removing…" : "Delete"}
+      </button>
+      <button
+        className="swipe-delete swipe-delete-right"
+        type="button"
+        onClick={onDelete}
+        disabled={deleting}
+      >
+        {deleting ? "Removing…" : "Delete"}
+      </button>
+      <article
+        className={dragging ? "is-swiping" : ""}
+        style={{ transform: `translate3d(${offset}px, 0, 0)` }}
+        onPointerDown={pointerDown}
+        onPointerMove={pointerMove}
+        onPointerUp={pointerUp}
+        onPointerCancel={pointerUp}
+      >
+        <img src={product.image_url || product.image} alt="" />
+        <div>
+          <span>{product.eyebrow}</span>
+          <strong>{product.name}</strong>
+        </div>
+        <span>{product.category}</span>
+        <span>
+          ${Math.round((product.price_cents || product.price * 100) / 100)}
+        </span>
+        <span className="stock-good">20 in stock</span>
+        <button
+          type="button"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={onEdit}
+        >
+          Edit →
+        </button>
+      </article>
+    </div>
   );
 }
 
