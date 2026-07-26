@@ -38,10 +38,16 @@ async function loadSiteData() {
   return pending;
 }
 
-export function useSiteData() {
-  const [data, setData] = useState<ArcSiteData | null>(cached);
+export function useSiteData(initialData: ArcSiteData | null = null) {
+  const [data, setData] = useState<ArcSiteData | null>(() => cached || initialData);
 
   useEffect(() => {
+    if (initialData) {
+      cached = initialData;
+      setData(initialData);
+      return;
+    }
+
     let active = true;
     loadSiteData().then((result) => {
       if (active && result) setData(result);
@@ -49,7 +55,7 @@ export function useSiteData() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialData]);
 
   return data;
 }

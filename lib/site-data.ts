@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 export type ArcEvent = {
   eventId: string;
   slug: string;
@@ -169,13 +171,15 @@ export function getAppsScriptUrl() {
   ).replace(/\/+$/, "");
 }
 
-export async function fetchArcSiteData(): Promise<ArcSiteData | null> {
+export async function fetchArcSiteData(
+  cache: RequestCache = "no-store"
+): Promise<ArcSiteData | null> {
   const url = getAppsScriptUrl();
   if (!url) return null;
 
   try {
     const response = await fetch(`${url}?action=site_data`, {
-      cache: "no-store",
+      cache,
       redirect: "follow",
     });
     if (!response.ok) return null;
@@ -187,6 +191,15 @@ export async function fetchArcSiteData(): Promise<ArcSiteData | null> {
     return null;
   }
 }
+
+export const fetchCachedArcSiteData = unstable_cache(
+  () => fetchArcSiteData("force-cache"),
+  ["arc-site-data"],
+  {
+    revalidate: 300,
+    tags: ["arc-site-data"],
+  }
+);
 
 export function eventPath(event: Pick<ArcEvent, "slug" | "eventId">) {
   return `/events/${encodeURIComponent(event.slug || event.eventId)}`;

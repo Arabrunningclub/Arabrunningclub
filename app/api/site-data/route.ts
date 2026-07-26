@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchArcSiteData, getAppsScriptUrl } from "@/lib/site-data";
+import { fetchCachedArcSiteData, getAppsScriptUrl } from "@/lib/site-data";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function GET() {
     );
   }
 
-  const data = await fetchArcSiteData();
+  const data = await fetchCachedArcSiteData();
   if (!data) {
     return NextResponse.json(
       {
@@ -28,6 +28,8 @@ export async function GET() {
   }
 
   return NextResponse.json(data, {
-    headers: { "Cache-Control": "no-store" },
+    headers: {
+      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+    },
   });
 }
