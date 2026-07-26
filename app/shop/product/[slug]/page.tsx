@@ -9,6 +9,7 @@ import { formatPrice, products } from "@/lib/arc-shop/catalog";
 import {
   getStorefrontProduct,
   getStorefrontProducts,
+  getProductGalleryImages,
 } from "@/lib/arc-shop/storefront";
 
 export async function generateMetadata({
@@ -38,6 +39,8 @@ export default async function ProductPage({
   const { slug } = await params;
   const product = await getStorefrontProduct(slug);
   if (!product) notFound();
+  const galleryImages = await getProductGalleryImages(product.id);
+  const productImages = [product.image, ...galleryImages];
   const catalog = await getStorefrontProducts();
   const related = catalog
     .filter((item) => item.id !== product.id)
@@ -55,16 +58,24 @@ export default async function ProductPage({
         <section className="product-layout">
           <div className="product-gallery">
             <div className="product-main-image">
-              <span className="image-index">01 / 03</span>
+              <span className="image-index">
+                01 / {productImages.length.toString().padStart(2, "0")}
+              </span>
               <img src={product.image} alt={product.imageAlt} />
             </div>
             <div className="product-detail-tile product-detail-copy">
               <span>{product.eyebrow}</span>
               <strong>Designed for repeat wear.</strong>
             </div>
-            <div className="product-detail-tile product-detail-image">
-              <img src={product.image} alt="" />
-            </div>
+            {productImages.slice(1).map((image, index) => (
+              <div className="product-detail-tile product-detail-image" key={image}>
+                <span className="image-index">
+                  {(index + 2).toString().padStart(2, "0")} /{" "}
+                  {productImages.length.toString().padStart(2, "0")}
+                </span>
+                <img src={image} alt={`${product.name} view ${index + 2}`} />
+              </div>
+            ))}
           </div>
           <aside className="product-info">
             <span className="section-label">{product.eyebrow}</span>

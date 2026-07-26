@@ -40,7 +40,7 @@ export async function getStorefrontProducts(): Promise<Product[]> {
     );
     if (!response.ok) return fallbackProducts;
     const rows = (await response.json()) as StorefrontRow[];
-    if (!rows.length) return fallbackProducts;
+    if (!rows.length) return [];
     return rows.map(mapStorefrontRow);
   } catch {
     return fallbackProducts;
@@ -50,6 +50,42 @@ export async function getStorefrontProducts(): Promise<Product[]> {
 export async function getStorefrontProduct(slug: string) {
   const products = await getStorefrontProducts();
   return products.find((product) => product.slug === slug);
+}
+
+export async function getProductGalleryImages(productId: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return [];
+
+  try {
+    const prefix = `products/${productId}`;
+    const response = await fetch(
+      `${url}/storage/v1/object/list/shop-media`,
+      {
+        method: "POST",
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          prefix,
+          limit: 100,
+          offset: 0,
+          sortBy: { column: "created_at", order: "asc" },
+        }),
+        next: { revalidate: 60 },
+      },
+    );
+    if (!response.ok) return [];
+    const objects = (await response.json()) as Array<{ name: string }>;
+    return objects.map(
+      (object) =>
+        `${url}/storage/v1/object/public/shop-media/${prefix}/${object.name}`,
+    );
+  } catch {
+    return [];
+  }
 }
 
 function mapStorefrontRow(row: StorefrontRow): Product {

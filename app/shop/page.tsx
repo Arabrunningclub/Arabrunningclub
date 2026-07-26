@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { Footer } from "@/components/arc-shop/Footer";
 import { Header } from "@/components/arc-shop/Header";
 import { ProductCard } from "@/components/arc-shop/ProductCard";
+import { ShopComingSoon } from "@/components/arc-shop/ShopComingSoon";
 import { collections } from "@/lib/arc-shop/catalog";
+import {
+  isValidShopPreviewSession,
+  SHOP_PREVIEW_COOKIE,
+} from "@/lib/arc-shop/preview-auth";
 import { getStorefrontProducts } from "@/lib/arc-shop/storefront";
 
 export const metadata: Metadata = {
@@ -13,6 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  const previewAccess = isValidShopPreviewSession(
+    cookies().get(SHOP_PREVIEW_COOKIE)?.value,
+  );
+  if (!previewAccess) return <ShopComingSoon />;
+
   const products = await getStorefrontProducts();
   const featured = products.filter((product) => product.featured);
 
@@ -33,7 +44,7 @@ export default async function Home() {
             </p>
             <div className="hero-actions">
               <Link className="button button-light" href="/shop/products">
-                Shop the drop <span>↗</span>
+                Shop all apparel <span>→</span>
               </Link>
               <a className="text-link" href="#manifesto">
                 Our story <span>→</span>

@@ -1,3 +1,5 @@
+import { hasShopPreviewAccess } from "./preview-auth";
+
 type SupabaseConfig = {
   url: string;
   anonKey: string;
@@ -18,6 +20,14 @@ export function getSupabaseConfig(): SupabaseConfig | null {
 export async function verifyAdminRequest(request: Request) {
   const config = getSupabaseConfig();
   if (!config) return { ok: false as const, status: 503, error: "Supabase is not connected." };
+  if (hasShopPreviewAccess(request)) {
+    return {
+      ok: true as const,
+      config,
+      user: { id: "shop-preview", email: config.adminEmail },
+      token: "shop-preview",
+    };
+  }
   const authorization = request.headers.get("authorization");
   const token = authorization?.replace(/^Bearer\s+/i, "");
   if (!token) return { ok: false as const, status: 401, error: "Sign in required." };
