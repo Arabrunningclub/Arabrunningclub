@@ -2473,12 +2473,14 @@
   display: grid;
   gap: 1rem;
   grid-template-columns: 1fr auto auto;
+  left: 50%;
   max-width: 430px;
   padding: 1rem 1.1rem;
   position: fixed;
-  right: 1.5rem;
+  right: auto;
+  transform: translateX(-50%);
   width: calc(100% - 3rem);
-  z-index: 110;
+  z-index: 220;
 }
 
 .admin-toast div {
@@ -3628,9 +3630,10 @@
 
   .admin-toast {
     bottom: calc(82px + env(safe-area-inset-bottom));
-    left: 4vw;
-    right: 4vw;
-    width: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 8vw);
   }
 
   .admin-login {

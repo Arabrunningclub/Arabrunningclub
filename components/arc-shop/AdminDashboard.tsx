@@ -542,7 +542,10 @@ export function AdminDashboard({
                   onToggleDisabled={() =>
                     updateProductStatus(
                       product,
-                      product.status === "disabled" ? "active" : "disabled",
+                      product.status === "disabled" ||
+                        product.status === "archived"
+                        ? "active"
+                        : "disabled",
                     )
                   }
                   onEdit={() => setEditing(product)}
@@ -858,7 +861,11 @@ function SwipeableProductRow({
             Stock
           </button>
           <button type="button" onClick={onToggleDisabled} disabled={updating}>
-            {product.status === "disabled" ? "Enable" : "Disable"}
+            {product.status === "archived"
+              ? "Restore"
+              : product.status === "disabled"
+                ? "Enable"
+                : "Disable"}
           </button>
           <button
             className="danger"
