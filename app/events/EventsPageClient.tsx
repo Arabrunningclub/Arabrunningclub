@@ -216,6 +216,7 @@ function EventCard({
       <div className="flex flex-wrap gap-2 border-t border-current/10 px-5 py-4">
         <Link
           href={event.href}
+          prefetch
           className="rounded-full px-4 py-2 text-sm font-bold transition hover:brightness-110"
           style={{ backgroundColor: event.theme.buttonBackground, color: event.theme.buttonText }}
         >

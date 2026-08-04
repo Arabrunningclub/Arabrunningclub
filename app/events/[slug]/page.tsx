@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import Layout from "@/components/layout";
-import { fetchArcSiteData } from "@/lib/site-data";
+import { fetchCachedArcSiteData } from "@/lib/site-data";
 import EventDetailClient from "./EventDetailClient";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 type PageProps = { params: { slug: string } };
 
-async function getEventData(slug: string) {
-  const data = await fetchArcSiteData();
+const getEventData = cache(async (slug: string) => {
+  const data = await fetchCachedArcSiteData();
   if (!data) return null;
   const decoded = decodeURIComponent(slug);
   const event = data.events.find(
@@ -25,6 +26,13 @@ async function getEventData(slug: string) {
       (item) => item.eventId === "ALL" || item.eventId === event.eventId
     ),
   };
+});
+
+export async function generateStaticParams() {
+  const data = await fetchCachedArcSiteData();
+  return (data?.events || []).map((event) => ({
+    slug: event.slug || event.eventId,
+  }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
